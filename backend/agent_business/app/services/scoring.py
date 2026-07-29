@@ -33,6 +33,15 @@ class CandidatScoring:
     superficie_max_financable_ha: float
 
 
+@dataclass
+class ScoreDetail:
+    """Score final + toutes les composantes intermédiaires, pour l'explicabilité (bouton "Détails" côté frontend)."""
+    score: float
+    profit_normalise: float
+    risque_normalise: float
+    fit_budget: float
+
+
 def _normaliser_min_max(valeurs: list[float]) -> list[float]:
     """Normalisation min-max classique ; gère le cas dégénéré (toutes égales)."""
     vmin, vmax = min(valeurs), max(valeurs)
@@ -41,18 +50,19 @@ def _normaliser_min_max(valeurs: list[float]) -> list[float]:
     return [(v - vmin) / (vmax - vmin) for v in valeurs]
 
 
-def calculer_matching_scores(
+def calculer_matching_scores_detailles(
     candidats: list[CandidatScoring],
     superficie_disponible_ha: float,
-) -> dict[str, float]:
+) -> dict[str, ScoreDetail]:
     """
-    Calcule le matching_score (0-100) pour chaque culture candidate.
-    Retourne un dict {culture: score}.
+    Calcule le matching_score (0-100) pour chaque culture candidate, ainsi que
+    les composantes normalisées ayant servi au calcul (utilisé pour la
+    reconstitution du détail de calcul renvoyé au frontend).
     """
     profits = [c.profit_net_par_ha for c in candidats]
     profits_normalises = _normaliser_min_max(profits)
 
-    scores: dict[str, float] = {}
+    details: dict[str, ScoreDetail] = {}
 
     for candidat, profit_norm in zip(candidats, profits_normalises):
         fit_budget = min(1.0, candidat.superficie_max_financable_ha / superficie_disponible_ha)
@@ -62,6 +72,22 @@ def calculer_matching_scores(
             + POIDS_RISQUE * (1 - candidat.risque_normalise)
             + POIDS_BUDGET_FIT * fit_budget
         )
-        scores[candidat.culture] = round(score_brut * 100, 2)
+        details[candidat.culture] = ScoreDetail(
+            score=round(score_brut * 100, 2),
+            profit_normalise=round(profit_norm, 4),
+            risque_normalise=candidat.risque_normalise,
+            fit_budget=round(fit_budget, 4),
+        )
 
-    return scores
+    return details
+
+
+def calculer_matching_scores(
+    candidats: list[CandidatScoring],
+    superficie_disponible_ha: float,
+) -> dict[str, float]:
+    """Retourne uniquement {culture: score} — voir `calculer_matching_scores_detailles` pour le détail."""
+    return {
+        culture: detail.score
+        for culture, detail in calculer_matching_scores_detailles(candidats, superficie_disponible_ha).items()
+    }

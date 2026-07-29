@@ -62,6 +62,27 @@ class EtudeRisque(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+# Explicabilité — détail des calculs, pour le bouton "Détails" côté frontend
+# ---------------------------------------------------------------------------
+
+class DetailCalculMetrique(BaseModel):
+    """Explique comment une métrique du scénario a été obtenue : formule, valeurs
+    intermédiaires utilisées, et sources des données d'entrée."""
+    formule: str
+    valeurs: dict
+    sources: list[str]
+
+
+class DetailCalculScenario(BaseModel):
+    """Regroupe l'explication de chaque métrique affichée dans une carte scénario."""
+    score_matching: DetailCalculMetrique
+    surface_conseillee: DetailCalculMetrique
+    rendement_estime: DetailCalculMetrique
+    recolte_estimee: DetailCalculMetrique
+    profit_estime: DetailCalculMetrique
+
+
+# ---------------------------------------------------------------------------
 # Sortie finale — reflète business_scenarios
 # ---------------------------------------------------------------------------
 
@@ -79,6 +100,7 @@ class BusinessScenario(BaseModel):
     etude_marche: dict
     superficie_max_financable_ha: float  # combien d'ha ce budget permet de couvrir
     superficie_conseillee_ha: float  # min(disponible, max_financable) — surface réellement recommandée
+    detail_calcul: DetailCalculScenario
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 

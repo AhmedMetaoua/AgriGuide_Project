@@ -3,6 +3,7 @@ import { useState } from "react";
 import { ArrowRight, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MapPicker } from "@/components/MapPicker";
+import { saveTerrain } from "@/lib/terrain";
 
 export const Route = createFileRoute("/onboarding/terrain")({
   head: () => ({
@@ -53,7 +54,10 @@ function Page() {
           <Button
             size="lg"
             disabled={points.length < 3}
-            onClick={() => navigate({ to: "/dashboard" })}
+            onClick={() => {
+              saveTerrain(points);
+              navigate({ to: "/dashboard" });
+            }}
             className="h-14 px-8 rounded-2xl text-base"
           >
             Continuer <ArrowRight className="ml-2 h-5 w-5" />
