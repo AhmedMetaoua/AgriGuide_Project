@@ -25,9 +25,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
+// URL of the standalone "Agri Advisor IA" app (agri-advisor-parcelle/agri-advisor-react).
+// Override in prod via VITE_AGRI_ADVISOR_URL; defaults to the local Vite dev server.
+const AGRI_ADVISOR_URL = import.meta.env.VITE_AGRI_ADVISOR_URL ?? "http://localhost:5173";
+
 const nav = [
   { to: "/dashboard", label: "Accueil", icon: Home, roles: ["farmer"] as Role[] },
-  { to: "/agriculture", label: "Cultures", icon: Sprout, roles: ["farmer"] as Role[] },
+  { href: AGRI_ADVISOR_URL, label: "Cultures", icon: Sprout, roles: ["farmer"] as Role[] },
   { to: "/regulation", label: "Règles", icon: ScrollText, roles: ["farmer"] as Role[] },
   { to: "/business", label: "Budget", icon: LineChart, roles: ["farmer"] as Role[] },
   { to: "/aujourd-hui", label: "Aujourd'hui", icon: CalendarDays, roles: ["farmer"] as Role[] },
@@ -84,12 +88,25 @@ export function AppShell({
           </div>
         </Link>
         <nav className="flex flex-col gap-1">
-          {visibleNav.map(({ to, label, icon: Icon }) => {
-            const active = pathname === to || pathname.startsWith(to + "/");
+          {visibleNav.map((item) => {
+            const { label, icon: Icon } = item;
+            if ("href" in item) {
+              return (
+                <a
+                  key={item.href}
+                  href={item.href}
+                  className="flex items-center gap-3 rounded-xl px-4 py-3 text-base font-medium transition-colors text-foreground hover:bg-secondary"
+                >
+                  <Icon className="h-5 w-5" />
+                  {label}
+                </a>
+              );
+            }
+            const active = pathname === item.to || pathname.startsWith(item.to + "/");
             return (
               <Link
-                key={to}
-                to={to}
+                key={item.to}
+                to={item.to}
                 className={cn(
                   "flex items-center gap-3 rounded-xl px-4 py-3 text-base font-medium transition-colors",
                   active
@@ -116,12 +133,25 @@ export function AppShell({
           className="grid"
           style={{ gridTemplateColumns: `repeat(${visibleNav.length + 1}, minmax(0, 1fr))` }}
         >
-          {visibleNav.map(({ to, label, icon: Icon }) => {
-            const active = pathname === to || pathname.startsWith(to + "/");
+          {visibleNav.map((item) => {
+            const { label, icon: Icon } = item;
+            if ("href" in item) {
+              return (
+                <a
+                  key={item.href}
+                  href={item.href}
+                  className="flex flex-col items-center gap-1 py-2.5 text-[11px] font-medium text-muted-foreground"
+                >
+                  <Icon className="h-5 w-5" />
+                  {label}
+                </a>
+              );
+            }
+            const active = pathname === item.to || pathname.startsWith(item.to + "/");
             return (
               <Link
-                key={to}
-                to={to}
+                key={item.to}
+                to={item.to}
                 className={cn(
                   "flex flex-col items-center gap-1 py-2.5 text-[11px] font-medium",
                   active ? "text-primary" : "text-muted-foreground",
