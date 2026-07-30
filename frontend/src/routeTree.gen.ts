@@ -13,8 +13,11 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AgricultureRouteImport } from './routes/agriculture'
 import { Route as AujourdHuiRouteImport } from './routes/aujourd-hui'
 import { Route as BusinessRouteImport } from './routes/business'
+import { Route as ConnexionRouteImport } from './routes/connexion'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as InscriptionRouteImport } from './routes/inscription'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
+import { Route as ProfilRouteImport } from './routes/profil'
 import { Route as RegulationRouteImport } from './routes/regulation'
 import { Route as MarketplaceIndexRouteImport } from './routes/marketplace.index'
 import { Route as MarketplaceIdRouteImport } from './routes/marketplace.$id'
@@ -42,14 +45,29 @@ const BusinessRoute = BusinessRouteImport.update({
   path: '/business',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ConnexionRoute = ConnexionRouteImport.update({
+  id: '/connexion',
+  path: '/connexion',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
+const InscriptionRoute = InscriptionRouteImport.update({
+  id: '/inscription',
+  path: '/inscription',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MarketplaceRoute = MarketplaceRouteImport.update({
   id: '/marketplace',
   path: '/marketplace',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfilRoute = ProfilRouteImport.update({
+  id: '/profil',
+  path: '/profil',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RegulationRoute = RegulationRouteImport.update({
@@ -88,8 +106,11 @@ export interface FileRoutesByFullPath {
   '/agriculture': typeof AgricultureRoute
   '/aujourd-hui': typeof AujourdHuiRoute
   '/business': typeof BusinessRoute
+  '/connexion': typeof ConnexionRoute
   '/dashboard': typeof DashboardRoute
+  '/inscription': typeof InscriptionRoute
   '/marketplace': typeof MarketplaceRouteWithChildren
+  '/profil': typeof ProfilRoute
   '/regulation': typeof RegulationRoute
   '/marketplace/$id': typeof MarketplaceIdRoute
   '/marketplace/mes-annonces': typeof MarketplaceMesAnnoncesRoute
@@ -102,7 +123,10 @@ export interface FileRoutesByTo {
   '/agriculture': typeof AgricultureRoute
   '/aujourd-hui': typeof AujourdHuiRoute
   '/business': typeof BusinessRoute
+  '/connexion': typeof ConnexionRoute
   '/dashboard': typeof DashboardRoute
+  '/inscription': typeof InscriptionRoute
+  '/profil': typeof ProfilRoute
   '/regulation': typeof RegulationRoute
   '/marketplace/$id': typeof MarketplaceIdRoute
   '/marketplace/mes-annonces': typeof MarketplaceMesAnnoncesRoute
@@ -116,8 +140,11 @@ export interface FileRoutesById {
   '/agriculture': typeof AgricultureRoute
   '/aujourd-hui': typeof AujourdHuiRoute
   '/business': typeof BusinessRoute
+  '/connexion': typeof ConnexionRoute
   '/dashboard': typeof DashboardRoute
+  '/inscription': typeof InscriptionRoute
   '/marketplace': typeof MarketplaceRouteWithChildren
+  '/profil': typeof ProfilRoute
   '/regulation': typeof RegulationRoute
   '/marketplace/$id': typeof MarketplaceIdRoute
   '/marketplace/mes-annonces': typeof MarketplaceMesAnnoncesRoute
@@ -132,8 +159,11 @@ export interface FileRouteTypes {
     | '/agriculture'
     | '/aujourd-hui'
     | '/business'
+    | '/connexion'
     | '/dashboard'
+    | '/inscription'
     | '/marketplace'
+    | '/profil'
     | '/regulation'
     | '/marketplace/$id'
     | '/marketplace/mes-annonces'
@@ -146,7 +176,10 @@ export interface FileRouteTypes {
     | '/agriculture'
     | '/aujourd-hui'
     | '/business'
+    | '/connexion'
     | '/dashboard'
+    | '/inscription'
+    | '/profil'
     | '/regulation'
     | '/marketplace/$id'
     | '/marketplace/mes-annonces'
@@ -159,8 +192,11 @@ export interface FileRouteTypes {
     | '/agriculture'
     | '/aujourd-hui'
     | '/business'
+    | '/connexion'
     | '/dashboard'
+    | '/inscription'
     | '/marketplace'
+    | '/profil'
     | '/regulation'
     | '/marketplace/$id'
     | '/marketplace/mes-annonces'
@@ -174,8 +210,11 @@ export interface RootRouteChildren {
   AgricultureRoute: typeof AgricultureRoute
   AujourdHuiRoute: typeof AujourdHuiRoute
   BusinessRoute: typeof BusinessRoute
+  ConnexionRoute: typeof ConnexionRoute
   DashboardRoute: typeof DashboardRoute
+  InscriptionRoute: typeof InscriptionRoute
   MarketplaceRoute: typeof MarketplaceRouteWithChildren
+  ProfilRoute: typeof ProfilRoute
   RegulationRoute: typeof RegulationRoute
   OnboardingTerrainRoute: typeof OnboardingTerrainRoute
 }
@@ -210,6 +249,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BusinessRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/connexion': {
+      id: '/connexion'
+      path: '/connexion'
+      fullPath: '/connexion'
+      preLoaderRoute: typeof ConnexionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dashboard': {
       id: '/dashboard'
       path: '/dashboard'
@@ -217,11 +263,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/inscription': {
+      id: '/inscription'
+      path: '/inscription'
+      fullPath: '/inscription'
+      preLoaderRoute: typeof InscriptionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/marketplace': {
       id: '/marketplace'
       path: '/marketplace'
       fullPath: '/marketplace'
       preLoaderRoute: typeof MarketplaceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profil': {
+      id: '/profil'
+      path: '/profil'
+      fullPath: '/profil'
+      preLoaderRoute: typeof ProfilRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/regulation': {
@@ -292,8 +352,11 @@ const rootRouteChildren: RootRouteChildren = {
   AgricultureRoute: AgricultureRoute,
   AujourdHuiRoute: AujourdHuiRoute,
   BusinessRoute: BusinessRoute,
+  ConnexionRoute: ConnexionRoute,
   DashboardRoute: DashboardRoute,
+  InscriptionRoute: InscriptionRoute,
   MarketplaceRoute: MarketplaceRouteWithChildren,
+  ProfilRoute: ProfilRoute,
   RegulationRoute: RegulationRoute,
   OnboardingTerrainRoute: OnboardingTerrainRoute,
 }

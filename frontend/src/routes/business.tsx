@@ -13,9 +13,18 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { LineChart, Check, CheckCircle2, TrendingUp, MapPin, Ruler, Loader2, Info, Quote } from "lucide-react";
+import {
+  LineChart,
+  Check,
+  CheckCircle2,
+  TrendingUp,
+  MapPin,
+  Ruler,
+  Loader2,
+  Info,
+  Quote,
+} from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { loadTerrain, areaHectares, centroid, type LatLng } from "@/lib/terrain";
 import {
   fetchBusinessScenarios,
   confirmFarmerDecision,
@@ -24,15 +33,23 @@ import {
   type DetailCalculMetrique,
   type FarmerDecisionResponse,
 } from "@/lib/businessApi";
-import { MOCK_CROP_RECOMMENDATIONS, MOCK_TERRAIN_ID, cultureLabel } from "@/lib/cropRecommendations";
+import { MOCK_CROP_RECOMMENDATIONS, cultureLabel } from "@/lib/cropRecommendations";
+import { useAuth } from "@/lib/auth-context";
 
 export const Route = createFileRoute("/business")({
   head: () => ({
     meta: [
       { title: "Conseiller Business — AgriGuide" },
-      { name: "description", content: "Simulez votre budget et comparez trois scénarios de cultures adaptés à votre exploitation." },
+      {
+        name: "description",
+        content:
+          "Simulez votre budget et comparez trois scénarios de cultures adaptés à votre exploitation.",
+      },
       { property: "og:title", content: "Conseiller Business — AgriGuide" },
-      { property: "og:description", content: "Comparez trois scénarios pour tirer le meilleur de votre budget." },
+      {
+        property: "og:description",
+        content: "Comparez trois scénarios pour tirer le meilleur de votre budget.",
+      },
     ],
   }),
   component: Page,
@@ -56,9 +73,9 @@ function riskLevel(risqueScoreNormalise: number): RiskLevel {
 }
 
 const riskColor: Record<RiskLevel, string> = {
-  "Faible": "bg-harvest/15 text-harvest border-harvest/30",
-  "Modéré": "bg-waste/20 text-waste-foreground border-waste/40",
-  "Élevé": "bg-destructive/10 text-destructive border-destructive/30",
+  Faible: "bg-harvest/15 text-harvest border-harvest/30",
+  Modéré: "bg-waste/20 text-waste-foreground border-waste/40",
+  Élevé: "bg-destructive/10 text-destructive border-destructive/30",
 };
 
 function useDebouncedValue<T>(value: T, delayMs: number): T {
@@ -78,13 +95,16 @@ function Page() {
   const [decision, setDecision] = useState<FarmerDecisionResponse | null>(null);
   const [detailScenario, setDetailScenario] = useState<BusinessScenario | null>(null);
 
-  const [terrain, setTerrain] = useState<LatLng[]>([]);
-  useEffect(() => {
-    setTerrain(loadTerrain());
-  }, []);
-  const ha = useMemo(() => areaHectares(terrain), [terrain]);
-  const center = useMemo(() => centroid(terrain), [terrain]);
+  const { user } = useAuth();
+  const terrains = useMemo(() => user?.terrains ?? [], [user]);
+  // Le farmer peut avoir plusieurs terrains : la superficie disponible pour
+  // ce scénario est la somme de toutes ses parcelles déclarées (Profil).
+  const ha = useMemo(
+    () => terrains.reduce((total, t) => total + (t.superficie_ha ?? 0), 0),
+    [terrains],
+  );
   const superficieDisponibleHa = ha >= 0.1 ? Math.round(ha * 100) / 100 : FALLBACK_SUPERFICIE_HA;
+  const terrainId = terrains[0]?.id ?? "fallback-sans-terrain";
 
   // Liaison réelle avec backend/agent_business — POST /business/scenarios.
   // `crop_recommendations` vient normalement de l'agent Agriculture ; en
@@ -95,7 +115,7 @@ function Page() {
     queryKey: ["business-scenarios", debouncedBudget, superficieDisponibleHa],
     queryFn: () =>
       fetchBusinessScenarios({
-        terrain_id: MOCK_TERRAIN_ID,
+        terrain_id: terrainId,
         superficie_disponible_ha: superficieDisponibleHa,
         budget_input: debouncedBudget,
         date_plantation_prevue: datePlantationPrevue(),
@@ -119,7 +139,7 @@ function Page() {
 
   function chooseScenario(scenario: BusinessScenario) {
     decisionMutation.mutate({
-      terrain_id: MOCK_TERRAIN_ID,
+      terrain_id: terrainId,
       superficie_disponible_ha: superficieDisponibleHa,
       allocations: [
         {
@@ -146,14 +166,18 @@ function Page() {
           <div className="mx-auto h-16 w-16 rounded-full bg-harvest/20 text-harvest flex items-center justify-center">
             <CheckCircle2 className="h-8 w-8" />
           </div>
-          <h1 className="mt-6 font-display text-3xl md:text-4xl font-semibold">Scénario confirmé</h1>
+          <h1 className="mt-6 font-display text-3xl md:text-4xl font-semibold">
+            Scénario confirmé
+          </h1>
           <p className="mt-2 text-muted-foreground">
             Voici la répartition de vos hectares pour <b>{cultureLabel(selected.culture)}</b>.
           </p>
         </div>
 
         <div className="card-soft p-6 mt-8 max-w-2xl mx-auto">
-          <div className="text-sm text-muted-foreground">Répartition confirmée (agent_business)</div>
+          <div className="text-sm text-muted-foreground">
+            Répartition confirmée (agent_business)
+          </div>
           <div className="mt-4">
             <div className="flex justify-between text-sm font-medium">
               <span>{cultureLabel(selected.culture)}</span>
@@ -167,7 +191,9 @@ function Page() {
           <div className="mt-6 grid grid-cols-2 gap-4">
             <div className="rounded-2xl bg-secondary/60 p-4">
               <div className="text-xs text-muted-foreground">Coût final</div>
-              <div className="font-display text-2xl font-semibold">{allocation.cout_alloue.toLocaleString("fr-FR")} €</div>
+              <div className="font-display text-2xl font-semibold">
+                {allocation.cout_alloue.toLocaleString("fr-FR")} €
+              </div>
             </div>
             <div className="rounded-2xl bg-secondary/60 p-4">
               <div className="text-xs text-muted-foreground">Récolte estimée</div>
@@ -178,7 +204,9 @@ function Page() {
           </div>
           <div className="mt-4 flex items-center justify-between">
             <Badge className={`border ${riskColor[risk]}`}>Risque {risk}</Badge>
-            <span className="text-xs text-muted-foreground">Décision #{decision.decision_id.slice(0, 8)}</span>
+            <span className="text-xs text-muted-foreground">
+              Décision #{decision.decision_id.slice(0, 8)}
+            </span>
           </div>
         </div>
 
@@ -198,7 +226,9 @@ function Page() {
           <LineChart className="h-6 w-6" />
         </div>
         <div>
-          <h1 className="font-display text-3xl md:text-4xl font-semibold leading-none">Conseiller Business</h1>
+          <h1 className="font-display text-3xl md:text-4xl font-semibold leading-none">
+            Conseiller Business
+          </h1>
           <p className="text-muted-foreground mt-1">Simulez vos revenus selon votre budget.</p>
         </div>
       </div>
@@ -207,7 +237,9 @@ function Page() {
         <div className="card-soft p-6 md:p-8 md:col-span-3">
           <div className="flex items-baseline justify-between">
             <div className="text-sm text-muted-foreground">Votre budget de départ</div>
-            <div className="font-display text-3xl font-semibold text-primary">{budget.toLocaleString("fr-FR")} €</div>
+            <div className="font-display text-3xl font-semibold text-primary">
+              {budget.toLocaleString("fr-FR")} €
+            </div>
           </div>
           <Slider
             value={[budget]}
@@ -225,38 +257,36 @@ function Page() {
 
         <div className="card-soft p-6 md:col-span-2 bg-gradient-sky text-sky-foreground">
           <div className="flex items-center gap-2 text-sm font-medium">
-            <MapPin className="h-4 w-4" /> Votre terrain
+            <MapPin className="h-4 w-4" /> Vos terrains
           </div>
-          {terrain.length >= 3 ? (
+          {terrains.length > 0 ? (
             <>
               <div className="mt-3 flex items-baseline gap-2">
                 <span className="font-display text-4xl font-semibold">
                   {ha.toLocaleString("fr-FR", { maximumFractionDigits: 2 })}
                 </span>
                 <span className="text-sky-foreground/80 inline-flex items-center gap-1 text-sm">
-                  <Ruler className="h-4 w-4" /> hectares
+                  <Ruler className="h-4 w-4" /> hectares au total
                 </span>
               </div>
-              {center && (
-                <div className="mt-2 text-xs text-sky-foreground/80">
-                  Centre : {center[0].toFixed(5)}, {center[1].toFixed(5)}
-                </div>
-              )}
-              <div className="mt-3 text-xs font-medium text-sky-foreground/90">
-                {terrain.length} points GPS
-              </div>
-              <div className="mt-2 max-h-32 overflow-auto rounded-xl bg-card/20 p-2 text-[11px] font-mono leading-relaxed">
-                {terrain.map(([lat, lng], i) => (
-                  <div key={i}>
-                    {(i + 1).toString().padStart(2, "0")}. {lat.toFixed(5)}, {lng.toFixed(5)}
+              <div className="mt-3 space-y-1.5">
+                {terrains.map((t) => (
+                  <div
+                    key={t.id}
+                    className="flex items-center justify-between text-sm bg-card/20 rounded-lg px-3 py-1.5"
+                  >
+                    <span className="font-medium">{t.nom ?? "Terrain"}</span>
+                    <span className="text-sky-foreground/80">
+                      {t.superficie_ha.toLocaleString("fr-FR", { maximumFractionDigits: 2 })} ha
+                    </span>
                   </div>
                 ))}
               </div>
             </>
           ) : (
             <p className="mt-3 text-sm text-sky-foreground/90">
-              Aucun terrain sélectionné ({FALLBACK_SUPERFICIE_HA} ha utilisés par défaut). Tracez votre parcelle
-              depuis l'onboarding pour un calcul basé sur votre superficie réelle.
+              Aucun terrain déclaré ({FALLBACK_SUPERFICIE_HA} ha utilisés par défaut). Ajoutez vos
+              parcelles depuis votre profil pour un calcul basé sur votre superficie réelle.
             </p>
           )}
         </div>
@@ -309,7 +339,9 @@ function Page() {
             return (
               <div key={s.culture} className="card-soft p-6 flex flex-col">
                 <div className="flex items-center justify-between">
-                  <div className="font-display text-xl font-semibold">{cultureLabel(s.culture)}</div>
+                  <div className="font-display text-xl font-semibold">
+                    {cultureLabel(s.culture)}
+                  </div>
                   <Badge className={`border ${riskColor[risk]}`}>Risque {risk}</Badge>
                 </div>
                 <p className="text-sm text-muted-foreground mt-1">{s.risque_description}</p>
@@ -317,12 +349,21 @@ function Page() {
                 <div className="mt-5 space-y-3 text-sm">
                   <Row label="Score de matching" value={`${s.matching_score.toFixed(1)} / 100`} />
                   <Row label="Surface conseillée" value={`${s.superficie_conseillee_ha} ha`} />
-                  <Row label="Rendement estimé" value={`${s.quantite_par_ha.toLocaleString("fr-FR")} kg/ha`} />
+                  <Row
+                    label="Rendement estimé"
+                    value={`${s.quantite_par_ha.toLocaleString("fr-FR")} kg/ha`}
+                  />
                   <Row
                     label="Récolte estimée"
-                    value={new Date(s.etude_marche.date_recolte_estimee).toLocaleDateString("fr-FR")}
+                    value={new Date(s.etude_marche.date_recolte_estimee).toLocaleDateString(
+                      "fr-FR",
+                    )}
                   />
-                  <Row label="Profit estimé" value={`${s.profit_estime.toLocaleString("fr-FR")} €`} accent />
+                  <Row
+                    label="Profit estimé"
+                    value={`${s.profit_estime.toLocaleString("fr-FR")} €`}
+                    accent
+                  />
                 </div>
 
                 <div className="mt-3 text-xs text-muted-foreground">
@@ -370,15 +411,31 @@ function Page() {
                   Comment ces chiffres ont été calculés — {cultureLabel(detailScenario.culture)}
                 </DialogTitle>
                 <DialogDescription>
-                  Calcul déterministe fait par l'agent Business (formule explicite, pas une estimation du LLM).
+                  Calcul déterministe fait par l'agent Business (formule explicite, pas une
+                  estimation du LLM).
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4 mt-2">
-                <DetailSection title="Score de matching" detail={detailScenario.detail_calcul.score_matching} />
-                <DetailSection title="Surface conseillée" detail={detailScenario.detail_calcul.surface_conseillee} />
-                <DetailSection title="Rendement estimé" detail={detailScenario.detail_calcul.rendement_estime} />
-                <DetailSection title="Récolte estimée" detail={detailScenario.detail_calcul.recolte_estimee} />
-                <DetailSection title="Profit estimé" detail={detailScenario.detail_calcul.profit_estime} />
+                <DetailSection
+                  title="Score de matching"
+                  detail={detailScenario.detail_calcul.score_matching}
+                />
+                <DetailSection
+                  title="Surface conseillée"
+                  detail={detailScenario.detail_calcul.surface_conseillee}
+                />
+                <DetailSection
+                  title="Rendement estimé"
+                  detail={detailScenario.detail_calcul.rendement_estime}
+                />
+                <DetailSection
+                  title="Récolte estimée"
+                  detail={detailScenario.detail_calcul.recolte_estimee}
+                />
+                <DetailSection
+                  title="Profit estimé"
+                  detail={detailScenario.detail_calcul.profit_estime}
+                />
               </div>
             </>
           )}
@@ -392,7 +449,9 @@ function Row({ label, value, accent }: { label: string; value: string; accent?: 
   return (
     <div className="flex items-center justify-between gap-3 border-b border-border pb-2 last:border-none">
       <span className="text-muted-foreground">{label}</span>
-      <span className={accent ? "font-display text-lg font-semibold text-primary" : "font-medium"}>{value}</span>
+      <span className={accent ? "font-display text-lg font-semibold text-primary" : "font-medium"}>
+        {value}
+      </span>
     </div>
   );
 }
@@ -423,7 +482,10 @@ function DetailSection({ title, detail }: { title: string; detail: DetailCalculM
 
       <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1.5 text-sm">
         {Object.entries(detail.valeurs).map(([key, value]) => (
-          <div key={key} className="flex items-center justify-between gap-2 border-b border-border/60 pb-1">
+          <div
+            key={key}
+            className="flex items-center justify-between gap-2 border-b border-border/60 pb-1"
+          >
             <span className="text-muted-foreground">{labelizeKey(key)}</span>
             <span className="font-medium text-right">{formatDetailValue(value)}</span>
           </div>

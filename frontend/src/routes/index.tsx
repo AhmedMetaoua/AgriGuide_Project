@@ -6,9 +6,17 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "AgriGuide — Bienvenue" },
-      { name: "description", content: "AgriGuide, l'assistant qui aide chaque agriculteur à cultiver, gérer et vendre en toute simplicité." },
+      {
+        name: "description",
+        content:
+          "AgriGuide, l'assistant qui aide chaque agriculteur à cultiver, gérer et vendre en toute simplicité.",
+      },
       { property: "og:title", content: "AgriGuide — Bienvenue" },
-      { property: "og:description", content: "AgriGuide, l'assistant qui aide chaque agriculteur à cultiver, gérer et vendre en toute simplicité." },
+      {
+        property: "og:description",
+        content:
+          "AgriGuide, l'assistant qui aide chaque agriculteur à cultiver, gérer et vendre en toute simplicité.",
+      },
     ],
   }),
   component: Welcome,
@@ -45,28 +53,53 @@ function Welcome() {
             <span className="italic">ensemble</span>.
           </h1>
           <p className="mt-5 text-lg md:text-xl text-primary-foreground/90 max-w-2xl">
-            AgriGuide vous accompagne, du choix de vos cultures à la vente de votre récolte.
-            Simple, clair, sans jargon — comme un conseiller de confiance à vos côtés.
+            AgriGuide vous accompagne, du choix de vos cultures à la vente de votre récolte. Simple,
+            clair, sans jargon — comme un conseiller de confiance à vos côtés.
           </p>
 
           <div className="mt-8 flex flex-col sm:flex-row gap-3">
-            <Button asChild size="lg" className="h-14 px-8 text-base rounded-2xl bg-primary-foreground text-primary hover:bg-primary-foreground/90">
-              <Link to="/onboarding/terrain">
-                Commencer <ArrowRight className="ml-2 h-5 w-5" />
+            <Button
+              asChild
+              size="lg"
+              className="h-14 px-8 text-base rounded-2xl bg-primary-foreground text-primary hover:bg-primary-foreground/90"
+            >
+              <Link to="/inscription">
+                Créer un compte <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
             </Button>
-            <Button asChild size="lg" variant="outline" className="h-14 px-8 text-base rounded-2xl bg-transparent border-primary-foreground/40 text-primary-foreground hover:bg-primary-foreground/10">
-              <Link to="/dashboard">Voir la démo</Link>
+            <Button
+              asChild
+              size="lg"
+              variant="outline"
+              className="h-14 px-8 text-base rounded-2xl bg-transparent border-primary-foreground/40 text-primary-foreground hover:bg-primary-foreground/10"
+            >
+              <Link to="/connexion">Se connecter</Link>
             </Button>
           </div>
         </div>
 
         <div className="relative mt-16 md:mt-24 grid gap-4 md:grid-cols-4">
           {[
-            { icon: Sprout, title: "Choisir ses cultures", text: "Analyse du sol, climat et rendement historique." },
-            { icon: ShieldCheck, title: "Comprendre les règles", text: "Aides, PAC et certifications expliquées simplement." },
-            { icon: LineChart, title: "Gérer au jour le jour", text: "Météo, alertes, budget et carnet de bord." },
-            { icon: Users, title: "Vendre et échanger", text: "Marketplace pour récoltes et déchets valorisables." },
+            {
+              icon: Sprout,
+              title: "Choisir ses cultures",
+              text: "Analyse du sol, climat et rendement historique.",
+            },
+            {
+              icon: ShieldCheck,
+              title: "Comprendre les règles",
+              text: "Aides, PAC et certifications expliquées simplement.",
+            },
+            {
+              icon: LineChart,
+              title: "Gérer au jour le jour",
+              text: "Météo, alertes, budget et carnet de bord.",
+            },
+            {
+              icon: Users,
+              title: "Vendre et échanger",
+              text: "Marketplace pour récoltes et déchets valorisables.",
+            },
           ].map(({ icon: Icon, title, text }) => (
             <div key={title} className="card-soft p-5">
               <div className="h-11 w-11 rounded-xl bg-secondary flex items-center justify-center text-primary">
