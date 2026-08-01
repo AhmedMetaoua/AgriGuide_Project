@@ -31,7 +31,7 @@ const AGRI_ADVISOR_URL = import.meta.env.VITE_AGRI_ADVISOR_URL ?? "http://localh
 
 const nav = [
   { to: "/dashboard", label: "Accueil", icon: Home, roles: ["farmer"] as Role[] },
-  { href: AGRI_ADVISOR_URL, label: "Cultures", icon: Sprout, roles: ["farmer"] as Role[] },
+  { to:"/agriculture", label: "Cultures", icon: Sprout, roles: ["farmer"] as Role[] },
   { to: "/regulation", label: "Règles", icon: ScrollText, roles: ["farmer"] as Role[] },
   { to: "/business", label: "Budget", icon: LineChart, roles: ["farmer"] as Role[] },
   { to: "/aujourd-hui", label: "Aujourd'hui", icon: CalendarDays, roles: ["farmer"] as Role[] },

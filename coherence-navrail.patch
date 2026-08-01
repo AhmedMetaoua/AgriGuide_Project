@@ -1,0 +1,836 @@
+diff --git a/agri-advisor-parcelle/agri-advisor-react/.env.example b/agri-advisor-parcelle/agri-advisor-react/.env.example
+index 67f69ca..148b47c 100644
+--- a/agri-advisor-parcelle/agri-advisor-react/.env.example
++++ b/agri-advisor-parcelle/agri-advisor-react/.env.example
+@@ -1,3 +1,7 @@
+ # URL of the FastAPI backend (uvicorn main:app --reload).
+ # Copy this file to .env and adjust if your backend runs elsewhere.
+ VITE_API_BASE_URL=http://127.0.0.1:8000
++
++# URL of the main "AgriGuide" app (frontend/). The sidebar's Accueil/Règles/Budget/
++# Aujourd'hui/Marché items link back here. Defaults to the local dev server if unset.
++VITE_AGRIGUIDE_URL=http://localhost:8080
+diff --git a/agri-advisor-parcelle/agri-advisor-react/index.html b/agri-advisor-parcelle/agri-advisor-react/index.html
+index 1a11ecb..fd735e3 100644
+--- a/agri-advisor-parcelle/agri-advisor-react/index.html
++++ b/agri-advisor-parcelle/agri-advisor-react/index.html
+@@ -7,7 +7,7 @@
+     <link rel="preconnect" href="https://fonts.googleapis.com" />
+     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+     <link
+-      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
++      href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&display=swap"
+       rel="stylesheet"
+     />
+   </head>
+diff --git a/agri-advisor-parcelle/agri-advisor-react/src/App.tsx b/agri-advisor-parcelle/agri-advisor-react/src/App.tsx
+index 5bdcac7..99d141f 100644
+--- a/agri-advisor-parcelle/agri-advisor-react/src/App.tsx
++++ b/agri-advisor-parcelle/agri-advisor-react/src/App.tsx
+@@ -3,9 +3,10 @@ import { ApiError, getNdviHeatmap } from "./api/client";
+ import { AgricultureDashboard } from "./components/Agriculture/AgricultureDashboard";
+ import { Chatbot } from "./components/Chatbot/Chatbot";
+ import { MapView } from "./components/MapView";
+-import { NavRail, type AppView } from "./components/NavRail/NavRail";
++import { NavRail } from "./components/NavRail/NavRail";
++import { ViewTabs } from "./components/NavRail/ViewTabs";
++import type { AppView } from "./components/NavRail/viewTypes";
+ import { ReportModal } from "./components/Report/ReportModal";
+-import { Sidebar } from "./components/Sidebar/Sidebar";
+ import { useAdvise } from "./hooks/useAdvise";
+ import { useParcelSelection } from "./hooks/useParcelSelection";
+ import type { NdviHeatmapResponse } from "./types/api";
+@@ -52,7 +53,8 @@ export default function App() {
+ 
+   return (
+     <>
+-      <NavRail active={view} onSelect={setView} />
++      <NavRail />
++      <ViewTabs active={view} onSelect={setView} />
+ 
+       <Chatbot
+         parcel={parcel}
+@@ -70,18 +72,22 @@ export default function App() {
+             onSelectPoint={handleSelectPoint}
+           />
+ 
+-          <Sidebar
+-            status={status}
+-            message={message}
+-            parcel={parcel}
+-            neighbors={neighbors}
+-            ndviAvailable={parcel !== null}
+-            ndviActive={ndviOverlay !== null}
+-            ndviLoading={ndviLoading}
+-            adviseLoading={adviseLoading}
+-            onToggleNdvi={handleToggleNdvi}
+-            onAdvise={handleAdvise}
+-          />
++          <div className="card map-action-card">
++            <div className="map-action-status">
++              <span className={`status-dot status-${status}`} />
++              {message ?? "Cliquez sur une parcelle pour commencer."}
++            </div>
++            {parcel && (
++              <div className="map-action-buttons">
++                <button className="hmbtn" onClick={handleToggleNdvi} disabled={ndviLoading}>
++                  {ndviLoading ? "🛰️ Chargement…" : ndviOverlay ? "🛰️ Masquer NDVI" : "🛰️ Afficher NDVI"}
++                </button>
++                <button className="abtn" onClick={handleAdvise} disabled={adviseLoading}>
++                  {adviseLoading ? "🔍 Analyse…" : "🔍 Obtenir les recommandations"}
++                </button>
++              </div>
++            )}
++          </div>
+ 
+           <ReportModal report={report} loading={adviseLoading} error={adviseError} onClose={resetAdvise} />
+         </>
+diff --git a/agri-advisor-parcelle/agri-advisor-react/src/components/NavRail/NavRail.css b/agri-advisor-parcelle/agri-advisor-react/src/components/NavRail/NavRail.css
+index ce82d0d..b0df5be 100644
+--- a/agri-advisor-parcelle/agri-advisor-react/src/components/NavRail/NavRail.css
++++ b/agri-advisor-parcelle/agri-advisor-react/src/components/NavRail/NavRail.css
+@@ -10,36 +10,52 @@
+   flex-direction: column;
+   z-index: 1000;
+   overflow-y: auto;
++  padding: 24px 16px;
++  gap: 6px;
+ }
+ 
+ .navrail-brand {
+   display: flex;
+   align-items: center;
+   gap: 10px;
+-  padding: 20px 18px;
++  padding: 0 8px 20px;
++  margin-bottom: 8px;
+   border-bottom: 1px solid var(--d100);
++  text-decoration: none;
++  color: inherit;
++}
++
++.bicon {
++  width: 40px;
++  height: 40px;
++  border-radius: 14px;
++  background: linear-gradient(135deg, var(--g500), var(--g700));
++  display: flex;
++  align-items: center;
++  justify-content: center;
++  font-size: 19px;
++  flex-shrink: 0;
++  box-shadow: var(--sha);
+ }
+ 
+ .navrail-brand h1 {
+-  font-size: 14px;
+-  font-weight: 700;
++  font-size: 16px;
++  font-weight: 600;
+   color: var(--d900);
+   line-height: 1.2;
+ }
+ 
+ .navrail-brand p {
+-  font-size: 10.5px;
+-  color: var(--d400);
+-  font-weight: 600;
+-  text-transform: uppercase;
+-  letter-spacing: 0.04em;
++  font-size: 11px;
++  color: var(--d600);
++  font-weight: 500;
++  margin-top: 1px;
+ }
+ 
+ .navrail-items {
+   display: flex;
+   flex-direction: column;
+-  gap: 2px;
+-  padding: 12px;
++  gap: 3px;
+ }
+ 
+ .navrail-item {
+@@ -47,32 +63,27 @@
+   align-items: center;
+   gap: 12px;
+   width: 100%;
+-  padding: 10px 12px;
++  padding: 11px 14px;
+   border: none;
+   background: transparent;
+-  border-radius: var(--rs);
+-  font-size: 13.5px;
++  border-radius: 12px;
++  font-size: 14px;
+   font-weight: 600;
+-  color: var(--d600);
++  color: var(--d800);
+   cursor: pointer;
+   text-align: left;
++  text-decoration: none;
+   transition: background 0.15s, color 0.15s;
+ }
+ 
+-.navrail-item:hover:not(:disabled) {
+-  background: var(--d50);
+-  color: var(--d800);
++.navrail-item:hover {
++  background: var(--g50);
+ }
+ 
+ .navrail-item.active {
+-  background: var(--g100);
+-  color: var(--g700);
+-}
+-
+-.navrail-item.disabled {
+-  color: var(--d400);
+-  cursor: default;
+-  opacity: 0.6;
++  background: var(--g700);
++  color: var(--w);
++  box-shadow: var(--sha);
+ }
+ 
+ .navrail-icon {
+@@ -82,20 +93,60 @@
+   text-align: center;
+ }
+ 
++.navrail-user {
++  margin-top: auto;
++  display: flex;
++  align-items: center;
++  gap: 10px;
++  padding: 10px 12px;
++  border-radius: 12px;
++}
++
++.navrail-avatar {
++  width: 34px;
++  height: 34px;
++  border-radius: 50%;
++  background: var(--g100);
++  color: var(--g700);
++  display: flex;
++  align-items: center;
++  justify-content: center;
++  font-size: 12px;
++  font-weight: 700;
++  flex-shrink: 0;
++}
++
++.navrail-user-name {
++  font-size: 13px;
++  font-weight: 700;
++  color: var(--d900);
++}
++
++.navrail-user-role {
++  font-size: 11px;
++  color: var(--d600);
++}
++
+ @media (max-width: 900px) {
+   .navrail {
+     width: 64px;
++    padding: 16px 8px;
+   }
+   .navrail-brand p,
+-  .navrail-label {
++  .navrail-label,
++  .navrail-user-name,
++  .navrail-user-role {
+     display: none;
+   }
+   .navrail-brand {
+     justify-content: center;
+-    padding: 16px 8px;
++    padding: 0 0 16px;
+   }
+   .navrail-item {
+     justify-content: center;
+     padding: 12px 8px;
+   }
++  .navrail-user {
++    justify-content: center;
++  }
+ }
+diff --git a/agri-advisor-parcelle/agri-advisor-react/src/components/NavRail/NavRail.tsx b/agri-advisor-parcelle/agri-advisor-react/src/components/NavRail/NavRail.tsx
+index bb5b7c5..b4a3a3d 100644
+--- a/agri-advisor-parcelle/agri-advisor-react/src/components/NavRail/NavRail.tsx
++++ b/agri-advisor-parcelle/agri-advisor-react/src/components/NavRail/NavRail.tsx
+@@ -1,56 +1,59 @@
+ import "./NavRail.css";
+ 
+-export type AppView = "carte" | "agriculture";
++// URL of the main "AgriGuide" app (frontend/). Override in prod via VITE_AGRIGUIDE_URL;
++// defaults to the local Vite/TanStack dev server.
++const AGRIGUIDE_URL = import.meta.env.VITE_AGRIGUIDE_URL ?? "http://localhost:8080";
+ 
+ interface NavItem {
+-  id: AppView | "soon";
+   key: string;
+   icon: string;
+   label: string;
+-  enabled: boolean;
++  href?: string; // external -> goes back to AgriGuide
++  active?: boolean;
+ }
+ 
+ const ITEMS: NavItem[] = [
+-  { id: "soon", key: "dashboard", icon: "📊", label: "Tableau de bord", enabled: false },
+-  { id: "agriculture", key: "agriculture", icon: "🌱", label: "Agriculture", enabled: true },
+-  { id: "soon", key: "reglementation", icon: "📜", label: "Réglementation", enabled: false },
+-  { id: "soon", key: "business", icon: "💼", label: "Business", enabled: false },
+-  { id: "soon", key: "suivi", icon: "🗓️", label: "Suivi quotidien", enabled: false },
+-  { id: "soon", key: "marketplace", icon: "🛒", label: "Marketplace", enabled: false },
++  { key: "accueil", icon: "🏠", label: "Accueil", href: `${AGRIGUIDE_URL}/dashboard` },
++  { key: "cultures", icon: "🌱", label: "Cultures", active: true },
++  { key: "regles", icon: "📜", label: "Règles", href: `${AGRIGUIDE_URL}/regulation` },
++  { key: "budget", icon: "📈", label: "Budget", href: `${AGRIGUIDE_URL}/business` },
++  { key: "aujourdhui", icon: "🗓️", label: "Aujourd'hui", href: `${AGRIGUIDE_URL}/aujourd-hui` },
++  { key: "marche", icon: "🏪", label: "Marché", href: `${AGRIGUIDE_URL}/marketplace` },
+ ];
+ 
+-interface NavRailProps {
+-  active: AppView;
+-  onSelect: (view: AppView) => void;
+-}
+-
+-export function NavRail({ active, onSelect }: NavRailProps) {
++export function NavRail() {
+   return (
+     <nav className="navrail">
+-      <div className="navrail-brand">
+-        <div className="bicon">🌾</div>
++      <a href={`${AGRIGUIDE_URL}/dashboard`} className="navrail-brand">
++        <div className="bicon">🌿</div>
+         <div>
+-          <h1>Agri Advisor IA</h1>
+-          <p>Conseiller agronomique</p>
++          <h1>AgriGuide</h1>
++          <p>Votre allié au quotidien</p>
+         </div>
+-      </div>
++      </a>
+ 
+       <div className="navrail-items">
+-        {ITEMS.map((item) => {
+-          const isActive = item.id === active;
+-          return (
+-            <button
+-              key={item.key}
+-              className={`navrail-item${isActive ? " active" : ""}${!item.enabled ? " disabled" : ""}`}
+-              onClick={() => item.enabled && onSelect(item.id as AppView)}
+-              disabled={!item.enabled}
+-              title={item.enabled ? undefined : "Bientôt disponible"}
+-            >
++        {ITEMS.map((item) =>
++          item.href ? (
++            <a key={item.key} className="navrail-item" href={item.href}>
++              <span className="navrail-icon">{item.icon}</span>
++              <span className="navrail-label">{item.label}</span>
++            </a>
++          ) : (
++            <div key={item.key} className="navrail-item active" aria-current="page">
+               <span className="navrail-icon">{item.icon}</span>
+               <span className="navrail-label">{item.label}</span>
+-            </button>
+-          );
+-        })}
++            </div>
++          ),
++        )}
++      </div>
++
++      <div className="navrail-user">
++        <div className="navrail-avatar">JD</div>
++        <div>
++          <div className="navrail-user-name">Jean Demo</div>
++          <div className="navrail-user-role">Agriculteur</div>
++        </div>
+       </div>
+     </nav>
+   );
+diff --git a/agri-advisor-parcelle/agri-advisor-react/src/components/NavRail/ViewTabs.css b/agri-advisor-parcelle/agri-advisor-react/src/components/NavRail/ViewTabs.css
+new file mode 100644
+index 0000000..617033e
+--- /dev/null
++++ b/agri-advisor-parcelle/agri-advisor-react/src/components/NavRail/ViewTabs.css
+@@ -0,0 +1,48 @@
++.view-tabs {
++  position: fixed;
++  top: 20px;
++  left: 252px;
++  z-index: 900;
++  display: flex;
++  gap: 6px;
++  background: var(--w);
++  border: 1px solid var(--d200);
++  border-radius: 99px;
++  padding: 5px;
++  box-shadow: var(--sha);
++}
++
++.view-tab {
++  display: flex;
++  align-items: center;
++  gap: 6px;
++  border: none;
++  background: transparent;
++  color: var(--d700);
++  font-size: 13px;
++  font-weight: 700;
++  padding: 8px 16px;
++  border-radius: 99px;
++  cursor: pointer;
++  transition: background 0.15s, color 0.15s;
++  white-space: nowrap;
++}
++
++.view-tab:hover {
++  background: var(--g50);
++}
++
++.view-tab.active {
++  background: var(--g700);
++  color: var(--w);
++}
++
++@media (max-width: 900px) {
++  .view-tabs {
++    left: 72px;
++    top: 12px;
++  }
++  .view-tab {
++    padding: 8px 10px;
++  }
++}
+diff --git a/agri-advisor-parcelle/agri-advisor-react/src/components/NavRail/ViewTabs.tsx b/agri-advisor-parcelle/agri-advisor-react/src/components/NavRail/ViewTabs.tsx
+new file mode 100644
+index 0000000..e2f46d7
+--- /dev/null
++++ b/agri-advisor-parcelle/agri-advisor-react/src/components/NavRail/ViewTabs.tsx
+@@ -0,0 +1,29 @@
++import type { AppView } from "./viewTypes";
++import "./ViewTabs.css";
++
++const TABS: { id: AppView; label: string; icon: string }[] = [
++  { id: "carte", label: "Carte", icon: "🗺️" },
++  { id: "agriculture", label: "Conseiller", icon: "🌱" },
++];
++
++interface ViewTabsProps {
++  active: AppView;
++  onSelect: (view: AppView) => void;
++}
++
++export function ViewTabs({ active, onSelect }: ViewTabsProps) {
++  return (
++    <div className="view-tabs">
++      {TABS.map((t) => (
++        <button
++          key={t.id}
++          className={`view-tab${t.id === active ? " active" : ""}`}
++          onClick={() => onSelect(t.id)}
++        >
++          <span>{t.icon}</span>
++          {t.label}
++        </button>
++      ))}
++    </div>
++  );
++}
+diff --git a/agri-advisor-parcelle/agri-advisor-react/src/components/NavRail/viewTypes.ts b/agri-advisor-parcelle/agri-advisor-react/src/components/NavRail/viewTypes.ts
+new file mode 100644
+index 0000000..d89cc5f
+--- /dev/null
++++ b/agri-advisor-parcelle/agri-advisor-react/src/components/NavRail/viewTypes.ts
+@@ -0,0 +1 @@
++export type AppView = "carte" | "agriculture";
+diff --git a/agri-advisor-parcelle/agri-advisor-react/src/components/Sidebar/ActionButtons.tsx b/agri-advisor-parcelle/agri-advisor-react/src/components/Sidebar/ActionButtons.tsx
+deleted file mode 100644
+index 613f43b..0000000
+--- a/agri-advisor-parcelle/agri-advisor-react/src/components/Sidebar/ActionButtons.tsx
++++ /dev/null
+@@ -1,43 +0,0 @@
+-interface ActionButtonsProps {
+-  parcelSelected: boolean;
+-  ndviAvailable: boolean;
+-  ndviActive: boolean;
+-  ndviLoading: boolean;
+-  adviseLoading: boolean;
+-  onToggleNdvi: () => void;
+-  onAdvise: () => void;
+-}
+-
+-export function ActionButtons({
+-  parcelSelected,
+-  ndviAvailable,
+-  ndviActive,
+-  ndviLoading,
+-  adviseLoading,
+-  onToggleNdvi,
+-  onAdvise,
+-}: ActionButtonsProps) {
+-  if (!parcelSelected) return null;
+-
+-  return (
+-    <>
+-      {ndviAvailable && (
+-        <button
+-          className={`hmbtn${ndviActive ? " on" : ""}`}
+-          onClick={onToggleNdvi}
+-          disabled={ndviLoading}
+-        >
+-          {ndviLoading
+-            ? "🛰️ Chargement…"
+-            : ndviActive
+-              ? "🛰️ Masquer la carte NDVI"
+-              : "🛰️ Afficher la carte NDVI"}
+-        </button>
+-      )}
+-
+-      <button className="abtn" onClick={onAdvise} disabled={adviseLoading}>
+-        {adviseLoading ? "⏳ Analyse en cours…" : "🔍 Obtenir les recommandations"}
+-      </button>
+-    </>
+-  );
+-}
+diff --git a/agri-advisor-parcelle/agri-advisor-react/src/components/Sidebar/NeighborCard.tsx b/agri-advisor-parcelle/agri-advisor-react/src/components/Sidebar/NeighborCard.tsx
+deleted file mode 100644
+index 6efb1c3..0000000
+--- a/agri-advisor-parcelle/agri-advisor-react/src/components/Sidebar/NeighborCard.tsx
++++ /dev/null
+@@ -1,37 +0,0 @@
+-import { useEffect, useRef } from "react";
+-import type { NeighborCropContext } from "../../types/api";
+-
+-export function NeighborCard({ neighbors }: { neighbors: NeighborCropContext | null }) {
+-  const listRef = useRef<HTMLDivElement>(null);
+-
+-  useEffect(() => {
+-    const bars = listRef.current?.querySelectorAll<HTMLDivElement>("[data-pct]");
+-    if (!bars) return;
+-    requestAnimationFrame(() => {
+-      bars.forEach((bar) => {
+-        bar.style.width = `${bar.dataset.pct}%`;
+-      });
+-    });
+-  }, [neighbors]);
+-
+-  if (!neighbors || !Object.keys(neighbors.crop_distribution_pct).length) return null;
+-
+-  return (
+-    <div className="card neighbor-card">
+-      <h3>Cultures voisines — {neighbors.neighbor_count} parcelles (800 m)</h3>
+-      <div className="nlist" ref={listRef}>
+-        {Object.entries(neighbors.crop_distribution_pct).map(([name, pct]) => (
+-          <div className="cbar" key={name}>
+-            <div className="cbar-head">
+-              <span className="cbar-name">{name}</span>
+-              <span className="cbar-pct">{pct}%</span>
+-            </div>
+-            <div className="cbar-track">
+-              <div className="cbar-fill" data-pct={pct} style={{ width: 0 }} />
+-            </div>
+-          </div>
+-        ))}
+-      </div>
+-    </div>
+-  );
+-}
+diff --git a/agri-advisor-parcelle/agri-advisor-react/src/components/Sidebar/Sidebar.css b/agri-advisor-parcelle/agri-advisor-react/src/components/Sidebar/Sidebar.css
+deleted file mode 100644
+index 189ab6c..0000000
+--- a/agri-advisor-parcelle/agri-advisor-react/src/components/Sidebar/Sidebar.css
++++ /dev/null
+@@ -1,19 +0,0 @@
+-.sidebar {
+-  position: fixed;
+-  top: 16px;
+-  right: 16px;
+-  z-index: 900;
+-  width: 360px;
+-  display: flex;
+-  flex-direction: column;
+-  gap: 12px;
+-  max-height: calc(100vh - 32px);
+-}
+-
+-@media (max-width: 640px) {
+-  .sidebar {
+-    left: 16px;
+-    right: 16px;
+-    width: auto;
+-  }
+-}
+diff --git a/agri-advisor-parcelle/agri-advisor-react/src/components/Sidebar/Sidebar.tsx b/agri-advisor-parcelle/agri-advisor-react/src/components/Sidebar/Sidebar.tsx
+deleted file mode 100644
+index 374a191..0000000
+--- a/agri-advisor-parcelle/agri-advisor-react/src/components/Sidebar/Sidebar.tsx
++++ /dev/null
+@@ -1,50 +0,0 @@
+-import type { SelectionStatus } from "../../hooks/useParcelSelection";
+-import type { NeighborCropContext, ParcelResolution } from "../../types/api";
+-import { Header } from "../Header";
+-import { ActionButtons } from "./ActionButtons";
+-import { NeighborCard } from "./NeighborCard";
+-import { StatusCard } from "./StatusCard";
+-import "./Sidebar.css";
+-
+-interface SidebarProps {
+-  status: SelectionStatus;
+-  message: string;
+-  parcel: ParcelResolution | null;
+-  neighbors: NeighborCropContext | null;
+-  ndviAvailable: boolean;
+-  ndviActive: boolean;
+-  ndviLoading: boolean;
+-  adviseLoading: boolean;
+-  onToggleNdvi: () => void;
+-  onAdvise: () => void;
+-}
+-
+-export function Sidebar({
+-  status,
+-  message,
+-  parcel,
+-  neighbors,
+-  ndviAvailable,
+-  ndviActive,
+-  ndviLoading,
+-  adviseLoading,
+-  onToggleNdvi,
+-  onAdvise,
+-}: SidebarProps) {
+-  return (
+-    <div className="sidebar">
+-      <Header />
+-      <StatusCard status={status} message={message} parcel={parcel} />
+-      <NeighborCard neighbors={neighbors} />
+-      <ActionButtons
+-        parcelSelected={parcel !== null}
+-        ndviAvailable={ndviAvailable}
+-        ndviActive={ndviActive}
+-        ndviLoading={ndviLoading}
+-        adviseLoading={adviseLoading}
+-        onToggleNdvi={onToggleNdvi}
+-        onAdvise={onAdvise}
+-      />
+-    </div>
+-  );
+-}
+diff --git a/agri-advisor-parcelle/agri-advisor-react/src/components/Sidebar/StatusCard.tsx b/agri-advisor-parcelle/agri-advisor-react/src/components/Sidebar/StatusCard.tsx
+deleted file mode 100644
+index f0006b3..0000000
+--- a/agri-advisor-parcelle/agri-advisor-react/src/components/Sidebar/StatusCard.tsx
++++ /dev/null
+@@ -1,70 +0,0 @@
+-import type { SelectionStatus } from "../../hooks/useParcelSelection";
+-import type { ParcelResolution } from "../../types/api";
+-
+-const SOURCE_LABELS: Record<ParcelResolution["source"], string> = {
+-  cadastre: "Cadastre (IGN)",
+-  rpg: "RPG (ASP)",
+-  manual: "Manuel",
+-  unresolved: "Non résolu",
+-};
+-
+-interface StatusCardProps {
+-  status: SelectionStatus;
+-  message: string;
+-  parcel: ParcelResolution | null;
+-}
+-
+-export function StatusCard({ status, message, parcel }: StatusCardProps) {
+-  const dotClass = status === "ready" ? "active" : status === "error" ? "err" : "";
+-
+-  return (
+-    <div className="card status-card">
+-      {!parcel && (
+-        <div className="hint">
+-          <div className={`dot ${dotClass}`} />
+-          <span>{message}</span>
+-        </div>
+-      )}
+-
+-      {parcel && (
+-        <div className="parcel-info">
+-          <div className="pid">{parcel.parcel_id ? `Réf. ${parcel.parcel_id}` : "Parcelle sélectionnée"}</div>
+-
+-          <div className="irow">
+-            <span className="ilbl">📍 Source</span>
+-            <span className="ival">{SOURCE_LABELS[parcel.source] ?? parcel.source}</span>
+-          </div>
+-
+-          <div className="irow">
+-            <span className="ilbl">🌱 Statut</span>
+-            <span
+-              className={`badge ${
+-                parcel.is_agricultural === true ? "bg" : parcel.is_agricultural === false ? "br" : "bd"
+-              }`}
+-            >
+-              {parcel.is_agricultural === true
+-                ? "✓ Terre agricole (RPG)"
+-                : parcel.is_agricultural === false
+-                  ? "⚠️ Non déclarée RPG"
+-                  : "Statut inconnu"}
+-            </span>
+-          </div>
+-
+-          {parcel.crop_declared && (
+-            <div className="irow">
+-              <span className="ilbl">🌿 Culture</span>
+-              <span className="ival">{parcel.crop_declared}</span>
+-            </div>
+-          )}
+-
+-          {parcel.area_ha != null && (
+-            <div className="irow">
+-              <span className="ilbl">📐 Surface</span>
+-              <span className="ival">{parcel.area_ha.toFixed(2)} ha</span>
+-            </div>
+-          )}
+-        </div>
+-      )}
+-    </div>
+-  );
+-}
+diff --git a/agri-advisor-parcelle/agri-advisor-react/src/index.css b/agri-advisor-parcelle/agri-advisor-react/src/index.css
+index c0d38e9..adf31ce 100644
+--- a/agri-advisor-parcelle/agri-advisor-react/src/index.css
++++ b/agri-advisor-parcelle/agri-advisor-react/src/index.css
+@@ -7,39 +7,47 @@
+ }
+ 
+ :root {
+-  --g900: #14532d;
+-  --g700: #15803d;
+-  --g600: #16a34a;
+-  --g500: #22c55e;
+-  --g100: #dcfce7;
+-  --g50: #f0fdf4;
+-  --a500: #f59e0b;
+-  --a100: #fef3c7;
+-  --r600: #dc2626;
+-  --r100: #fee2e2;
+-  --s100: #e0f2fe;
+-  --d900: #111827;
+-  --d800: #1f2937;
+-  --d700: #374151;
+-  --d600: #4b5563;
+-  --d400: #9ca3af;
+-  --d200: #e5e7eb;
+-  --d100: #f3f4f6;
+-  --d50: #f9fafb;
++  --g900: #1f5c34;
++  --g700: #2f7d4f;
++  --g600: #3f8f52;
++  --g500: #4ca85e;
++  --g100: #e3efd9;
++  --g50: #f3f7ec;
++  --a500: #d98f3a;
++  --a100: #f5e6cb;
++  --r600: #c0392b;
++  --r100: #f6dcd6;
++  --s100: #dbe9f5;
++  --d900: #223421;
++  --d800: #33452f;
++  --d700: #4a5c44;
++  --d600: #6b7a63;
++  --d400: #9aa392;
++  --d200: #ddd9c9;
++  --d100: #eeece0;
++  --d50: #f6f4ea;
++  --cream: #fbf8ee;
+   --w: #ffffff;
+-  --sha: 0 4px 16px rgba(0, 0, 0, 0.13), 0 2px 6px rgba(0, 0, 0, 0.08);
+-  --shb: 0 20px 48px rgba(0, 0, 0, 0.2), 0 8px 16px rgba(0, 0, 0, 0.1);
+-  --r: 12px;
+-  --rs: 8px;
++  --sha: 0 6px 24px -8px rgba(34, 52, 33, 0.15);
++  --shb: 0 20px 48px -12px rgba(34, 52, 33, 0.25);
++  --r: 20px;
++  --rs: 14px;
+ }
+ 
+ html,
+ body,
+ #root {
+   height: 100%;
+-  font-family: "Inter", system-ui, sans-serif;
+-  background: var(--d900);
+-  color: var(--d800);
++  font-family: "Nunito", system-ui, sans-serif;
++  background: var(--cream);
++  color: var(--d900);
++}
++
++h1,
++h2,
++h3 {
++  font-family: "Fraunces", Georgia, serif;
++  letter-spacing: -0.01em;
+ }
+ 
+ button {
+@@ -560,6 +568,55 @@ button {
+   font-weight: 700;
+ }
+ 
++.map-action-card {
++  position: fixed;
++  top: 76px;
++  right: 20px;
++  z-index: 900;
++  width: 320px;
++  max-width: calc(100vw - 40px);
++  padding: 18px;
++  display: flex;
++  flex-direction: column;
++  gap: 12px;
++}
++
++.map-action-status {
++  display: flex;
++  align-items: center;
++  gap: 8px;
++  font-size: 13px;
++  font-weight: 600;
++  color: var(--d800);
++  line-height: 1.5;
++}
++
++.status-dot {
++  width: 8px;
++  height: 8px;
++  border-radius: 50%;
++  flex-shrink: 0;
++  background: var(--d400);
++}
++
++.status-dot.status-loading {
++  background: var(--a500);
++}
++
++.status-dot.status-ready {
++  background: var(--g600);
++}
++
++.status-dot.status-error {
++  background: var(--r600);
++}
++
++.map-action-buttons {
++  display: flex;
++  flex-direction: column;
++  gap: 8px;
++}
++
+ /* ── Agriculture page (offset by the fixed NavRail) ── */
+ .agri-page {
+   margin-left: 232px;

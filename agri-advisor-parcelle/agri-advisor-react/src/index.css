@@ -7,39 +7,47 @@
 }
 
 :root {
-  --g900: #14532d;
-  --g700: #15803d;
-  --g600: #16a34a;
-  --g500: #22c55e;
-  --g100: #dcfce7;
-  --g50: #f0fdf4;
-  --a500: #f59e0b;
-  --a100: #fef3c7;
-  --r600: #dc2626;
-  --r100: #fee2e2;
-  --s100: #e0f2fe;
-  --d900: #111827;
-  --d800: #1f2937;
-  --d700: #374151;
-  --d600: #4b5563;
-  --d400: #9ca3af;
-  --d200: #e5e7eb;
-  --d100: #f3f4f6;
-  --d50: #f9fafb;
+  --g900: #1f5c34;
+  --g700: #2f7d4f;
+  --g600: #3f8f52;
+  --g500: #4ca85e;
+  --g100: #e3efd9;
+  --g50: #f3f7ec;
+  --a500: #d98f3a;
+  --a100: #f5e6cb;
+  --r600: #c0392b;
+  --r100: #f6dcd6;
+  --s100: #dbe9f5;
+  --d900: #223421;
+  --d800: #33452f;
+  --d700: #4a5c44;
+  --d600: #6b7a63;
+  --d400: #9aa392;
+  --d200: #ddd9c9;
+  --d100: #eeece0;
+  --d50: #f6f4ea;
+  --cream: #fbf8ee;
   --w: #ffffff;
-  --sha: 0 4px 16px rgba(0, 0, 0, 0.13), 0 2px 6px rgba(0, 0, 0, 0.08);
-  --shb: 0 20px 48px rgba(0, 0, 0, 0.2), 0 8px 16px rgba(0, 0, 0, 0.1);
-  --r: 12px;
-  --rs: 8px;
+  --sha: 0 6px 24px -8px rgba(34, 52, 33, 0.15);
+  --shb: 0 20px 48px -12px rgba(34, 52, 33, 0.25);
+  --r: 20px;
+  --rs: 14px;
 }
 
 html,
 body,
 #root {
   height: 100%;
-  font-family: "Inter", system-ui, sans-serif;
-  background: var(--d900);
-  color: var(--d800);
+  font-family: "Nunito", system-ui, sans-serif;
+  background: var(--cream);
+  color: var(--d900);
+}
+
+h1,
+h2,
+h3 {
+  font-family: "Fraunces", Georgia, serif;
+  letter-spacing: -0.01em;
 }
 
 button {
@@ -558,6 +566,55 @@ button {
 .prose strong {
   color: var(--d800);
   font-weight: 700;
+}
+
+.map-action-card {
+  position: fixed;
+  top: 76px;
+  right: 20px;
+  z-index: 900;
+  width: 320px;
+  max-width: calc(100vw - 40px);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.map-action-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--d800);
+  line-height: 1.5;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--d400);
+}
+
+.status-dot.status-loading {
+  background: var(--a500);
+}
+
+.status-dot.status-ready {
+  background: var(--g600);
+}
+
+.status-dot.status-error {
+  background: var(--r600);
+}
+
+.map-action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 /* ── Agriculture page (offset by the fixed NavRail) ── */

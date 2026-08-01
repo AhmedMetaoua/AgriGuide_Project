@@ -12,4 +12,17 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  server: {
+    host: "0.0.0.0",
+    port: 5173,
+    strictPort: true,
+    proxy: {
+      "/agri": {
+        target: "http://127.0.0.1:5174",
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/agri/, ""),
+      },
+    },
+  },
 });

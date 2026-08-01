@@ -3,9 +3,10 @@ import { ApiError, getNdviHeatmap } from "./api/client";
 import { AgricultureDashboard } from "./components/Agriculture/AgricultureDashboard";
 import { Chatbot } from "./components/Chatbot/Chatbot";
 import { MapView } from "./components/MapView";
-import { NavRail, type AppView } from "./components/NavRail/NavRail";
+import { NavRail } from "./components/NavRail/NavRail";
+import { ViewTabs } from "./components/NavRail/ViewTabs";
+import type { AppView } from "./components/NavRail/viewTypes";
 import { ReportModal } from "./components/Report/ReportModal";
-import { Sidebar } from "./components/Sidebar/Sidebar";
 import { useAdvise } from "./hooks/useAdvise";
 import { useParcelSelection } from "./hooks/useParcelSelection";
 import type { NdviHeatmapResponse } from "./types/api";
@@ -52,7 +53,8 @@ export default function App() {
 
   return (
     <>
-      <NavRail active={view} onSelect={setView} />
+      <NavRail />
+      <ViewTabs active={view} onSelect={setView} />
 
       <Chatbot
         parcel={parcel}
@@ -70,18 +72,22 @@ export default function App() {
             onSelectPoint={handleSelectPoint}
           />
 
-          <Sidebar
-            status={status}
-            message={message}
-            parcel={parcel}
-            neighbors={neighbors}
-            ndviAvailable={parcel !== null}
-            ndviActive={ndviOverlay !== null}
-            ndviLoading={ndviLoading}
-            adviseLoading={adviseLoading}
-            onToggleNdvi={handleToggleNdvi}
-            onAdvise={handleAdvise}
-          />
+          <div className="card map-action-card">
+            <div className="map-action-status">
+              <span className={`status-dot status-${status}`} />
+              {message ?? "Cliquez sur une parcelle pour commencer."}
+            </div>
+            {parcel && (
+              <div className="map-action-buttons">
+                <button className="hmbtn" onClick={handleToggleNdvi} disabled={ndviLoading}>
+                  {ndviLoading ? "🛰️ Chargement…" : ndviOverlay ? "🛰️ Masquer NDVI" : "🛰️ Afficher NDVI"}
+                </button>
+                <button className="abtn" onClick={handleAdvise} disabled={adviseLoading}>
+                  {adviseLoading ? "🔍 Analyse…" : "🔍 Obtenir les recommandations"}
+                </button>
+              </div>
+            )}
+          </div>
 
           <ReportModal report={report} loading={adviseLoading} error={adviseError} onClose={resetAdvise} />
         </>

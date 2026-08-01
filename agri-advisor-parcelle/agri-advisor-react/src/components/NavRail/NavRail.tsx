@@ -1,56 +1,59 @@
 import "./NavRail.css";
 
-export type AppView = "carte" | "agriculture";
+// URL of the main "AgriGuide" app (frontend/). Override in prod via VITE_AGRIGUIDE_URL;
+// defaults to the local Vite/TanStack dev server.
+const AGRIGUIDE_URL = import.meta.env.VITE_AGRIGUIDE_URL ?? "http://localhost:8080";
 
 interface NavItem {
-  id: AppView | "soon";
   key: string;
   icon: string;
   label: string;
-  enabled: boolean;
+  href?: string; // external -> goes back to AgriGuide
+  active?: boolean;
 }
 
 const ITEMS: NavItem[] = [
-  { id: "soon", key: "dashboard", icon: "📊", label: "Tableau de bord", enabled: false },
-  { id: "agriculture", key: "agriculture", icon: "🌱", label: "Agriculture", enabled: true },
-  { id: "soon", key: "reglementation", icon: "📜", label: "Réglementation", enabled: false },
-  { id: "soon", key: "business", icon: "💼", label: "Business", enabled: false },
-  { id: "soon", key: "suivi", icon: "🗓️", label: "Suivi quotidien", enabled: false },
-  { id: "soon", key: "marketplace", icon: "🛒", label: "Marketplace", enabled: false },
+  { key: "accueil", icon: "🏠", label: "Accueil", href: `${AGRIGUIDE_URL}/dashboard` },
+  { key: "cultures", icon: "🌱", label: "Cultures", active: true },
+  { key: "regles", icon: "📜", label: "Règles", href: `${AGRIGUIDE_URL}/regulation` },
+  { key: "budget", icon: "📈", label: "Budget", href: `${AGRIGUIDE_URL}/business` },
+  { key: "aujourdhui", icon: "🗓️", label: "Aujourd'hui", href: `${AGRIGUIDE_URL}/aujourd-hui` },
+  { key: "marche", icon: "🏪", label: "Marché", href: `${AGRIGUIDE_URL}/marketplace` },
 ];
 
-interface NavRailProps {
-  active: AppView;
-  onSelect: (view: AppView) => void;
-}
-
-export function NavRail({ active, onSelect }: NavRailProps) {
+export function NavRail() {
   return (
     <nav className="navrail">
-      <div className="navrail-brand">
-        <div className="bicon">🌾</div>
+      <a href={`${AGRIGUIDE_URL}/dashboard`} className="navrail-brand">
+        <div className="bicon">🌿</div>
         <div>
-          <h1>Agri Advisor IA</h1>
-          <p>Conseiller agronomique</p>
+          <h1>AgriMent</h1>
+          <p>Votre allié au quotidien</p>
         </div>
-      </div>
+      </a>
 
       <div className="navrail-items">
-        {ITEMS.map((item) => {
-          const isActive = item.id === active;
-          return (
-            <button
-              key={item.key}
-              className={`navrail-item${isActive ? " active" : ""}${!item.enabled ? " disabled" : ""}`}
-              onClick={() => item.enabled && onSelect(item.id as AppView)}
-              disabled={!item.enabled}
-              title={item.enabled ? undefined : "Bientôt disponible"}
-            >
+        {ITEMS.map((item) =>
+          item.href ? (
+            <a key={item.key} className="navrail-item" href={item.href}>
               <span className="navrail-icon">{item.icon}</span>
               <span className="navrail-label">{item.label}</span>
-            </button>
-          );
-        })}
+            </a>
+          ) : (
+            <div key={item.key} className="navrail-item active" aria-current="page">
+              <span className="navrail-icon">{item.icon}</span>
+              <span className="navrail-label">{item.label}</span>
+            </div>
+          ),
+        )}
+      </div>
+
+      <div className="navrail-user">
+        <div className="navrail-avatar">JD</div>
+        <div>
+          <div className="navrail-user-name">Jean Demo</div>
+          <div className="navrail-user-role">Agriculteur</div>
+        </div>
       </div>
     </nav>
   );

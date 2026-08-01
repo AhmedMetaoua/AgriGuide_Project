@@ -1,8 +1,13 @@
+venv/
+.venv/
+**/venv/
+**/venv_win/
+chroma_store/
+*.log
 .env
 __pycache__/
 *.pyc
+venv/
+venv_win/
 node_modules/
-.venv/
-*.log
-data/
-test.pybackend/auth/venv/ 
+chroma_store/

@@ -1,0 +1,98 @@
+/* Scoped shim: the ported agri-advisor components (Agriculture dashboard, Gauge,
+   Chatbot, ReportModal) were built against this small set of CSS variables.
+   Rather than rewrite every one of them in Tailwind, we redefine the same
+   variable names here — retinted to AgriGuide's actual palette — scoped under
+   .agri-embed so nothing leaks into the rest of the app. */
+.agri-embed {
+  --g900: #1f5c34;
+  --g700: #2f7d4f;
+  --g600: #3f8f52;
+  --g500: #4ca85e;
+  --g100: #e3efd9;
+  --g50: #f3f7ec;
+  --a500: #d98f3a;
+  --a100: #f5e6cb;
+  --r600: #c0392b;
+  --r100: #f6dcd6;
+  --s100: #dbe9f5;
+  --d900: #223421;
+  --d800: #33452f;
+  --d700: #4a5c44;
+  --d600: #6b7a63;
+  --d400: #9aa392;
+  --d200: #ddd9c9;
+  --d100: #eeece0;
+  --d50: #f6f4ea;
+  --w: #ffffff;
+  --sha: 0 6px 24px -8px rgba(34, 52, 33, 0.15);
+  --shb: 0 20px 48px -12px rgba(34, 52, 33, 0.25);
+  --r: 20px;
+  --rs: 14px;
+  font-family: "Nunito", system-ui, sans-serif;
+}
+
+.agri-embed h1,
+.agri-embed h2,
+.agri-embed h3 {
+  font-family: "Fraunces", Georgia, serif;
+}
+
+/* The map used to be a fixed full-viewport layer in the standalone app.
+   Here it lives inside a normal card, so it just fills its frame. */
+.agri-embed .agri-map-frame {
+  position: relative;
+  width: 100%;
+  height: 560px;
+  border-radius: var(--r);
+  overflow: hidden;
+  box-shadow: var(--sha);
+  border: 1px solid var(--d200);
+}
+
+.agri-embed .agri-map-frame .map-container {
+  position: absolute;
+  inset: 0;
+  z-index: auto;
+}
+
+/* Tabs to switch between Carte / Conseiller inside the merged page */
+.agri-tabs {
+  display: inline-flex;
+  gap: 4px;
+  background: var(--w);
+  border: 1px solid var(--d200);
+  border-radius: 99px;
+  padding: 4px;
+  box-shadow: var(--sha);
+  margin-bottom: 20px;
+}
+
+.agri-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  background: transparent;
+  color: var(--d700);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 9px 18px;
+  border-radius: 99px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.agri-tab:hover {
+  background: var(--g50);
+}
+
+.agri-tab.active {
+  background: var(--g700);
+  color: var(--w);
+}
+
+/* Chatbot floats above everything regardless of scroll position */
+.agri-embed .chat-toggle,
+.agri-embed .chat-panel {
+  position: fixed;
+}
