@@ -1,0 +1,30 @@
+[33mcommit e2e499ddb8e8d8305494d452af7f14d72c4f0b6d[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32magri-advisor-Bara[m[33m)[m
+Author: bara <bara.benkhedher@esprit.tn>
+Date:   Mon Aug 3 13:16:59 2026 +0100
+
+    agri_advisor updated
+
+ .env.example.txt                                   |  36 [32m+++++[m
+ .gitignore                                         |  23 [32m++++[m
+ check_cadastre_fields.py                           |  10 [31m--[m
+ check_chroma.py                                    |  11 [31m--[m
+ check_crop_scoring.py                              |  72 [31m----------[m
+ check_dl.py                                        |  97 [31m-------------[m
+ check_legume_nitrogen.py                           |  47 [31m-------[m
+ check_parcel.py                                    |   8 [31m--[m
+ check_retrieve.py                                  |  47 [31m-------[m
+ check_rpg.py                                       |   5 [31m-[m
+ check_rpg_layers.py                                |   9 [31m--[m
+ check_rpg_raw.py                                   |   9 [31m--[m
+ check_satellite.py                                 | 109 [31m---------------[m
+ check_yield.py                                     | 104 [31m--------------[m
+ chroma_store/chroma.sqlite3                        | Bin [31m180633600[m -> [32m0[m bytes
+ debug_hal_lookup.py                                |  48 [31m-------[m
+ dedupe_chroma.py                                   |  60 [31m---------[m
+ move_reviewed_corpus.py                            | 150 [31m---------------------[m
+ .../backfill_chunk_titles.py                       |   0
+ .../finetune_dl_service.py                         |   0
+ hal_title_lookup.py => scripts/hal_title_lookup.py |   0
+ manage_rag_store.py => scripts/manage_rag_store.py |   0
+ sort_corpus_by_crop.py                             |  93 [31m-------------[m
+ 23 files changed, 59 insertions(+), 879 deletions(-)
