@@ -1,0 +1,18 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Thème de base : AgriGuard (Vert Premium) -->
+    <style name="Theme.AgriGuard" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/primary_green</item>
+        <item name="colorPrimaryVariant">@color/primary_dark_green</item>
+        <item name="colorSecondary">@color/accent_gold</item>
+        <item name="android:windowBackground">@color/background_dark</item>
+        <item name="android:statusBarColor">@color/primary_dark_green</item>
+    </style>
+
+    <!-- Thème Alerte Rouge -->
+    <style name="Theme.AgriGuard.Alert" parent="Theme.AgriGuard">
+        <item name="colorPrimary">@color/alert_red</item>
+        <item name="colorPrimaryVariant">@color/alert_dark_red</item>
+        <item name="colorSecondary">@color/alert_accent</item>
+        <item name="android:statusBarColor">@color/alert_dark_red</item>
+    </style>
+</resources>

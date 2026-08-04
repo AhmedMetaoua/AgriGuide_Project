@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">AgriGuard</string>
+    <string name="capturer">Capturer l\'insecte</string>
+    <string name="identification">Identification en cours...</string>
+    <string name="analyse_details">Analyse des effets sur les cultures en cours...</string>
+    <string name="fermer">Fermer</string>
+    <string name="alerte_nuisible">ALERTE NUISIBLE DÉTECTÉ</string>
+    <string name="alerte_description">Le spécimen \'%1$s\' présente un risque majeur pour vos cultures !</string>
+    <string name="erreur_camera">Erreur lors du démarrage de la caméra</string>
+    <string name="erreur_capture">Erreur de capture : %1$s</string>
+    <string name="erreur_analyse">Erreur lors de l\'analyse de l\'insecte. Veuillez réessayer.</string>
+    <string name="permissions_refusees">Permissions non accordées.</string>
+</resources>
