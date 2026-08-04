@@ -1,0 +1,124 @@
+{
+  "mock_agricultural_database": [
+    {
+      "scenario_id": "farm_001",
+      "farmer_name": "Ahmed Ben Salah",
+      "location": {"city": "Sfax","latitude": 34.7406,"longitude": 10.7603},
+      "crop_context": {"crop_name": "Tomato","growth_stage": "flowering","soil_type": "sandy","water_sensitivity": "high"},
+      "hardware_inventory": ["manual watering cans","basic hoes","plastic mulch","no electricity","no pumps"],
+      "expected_weather_condition_to_simulate": "severe heatwave"
+    },
+    {
+      "scenario_id": "farm_002",
+      "farmer_name": "Fatima Al Mansouri",
+      "location": {"city": "Marrakech","latitude": 31.6295,"longitude": -7.9811},
+      "crop_context": {"crop_name": "Potato","growth_stage": "vegetative","soil_type": "clay","water_sensitivity": "high"},
+      "hardware_inventory": ["drainage ditches","shovels","tractor","fertilizer spreader"],
+      "expected_weather_condition_to_simulate": "heavy torrential rain"
+    },
+    {
+      "scenario_id": "farm_003",
+      "farmer_name": "John Peterson",
+      "location": {"city": "Fresno","latitude": 36.7378,"longitude": -119.7871},
+      "crop_context": {"crop_name": "Lettuce","growth_stage": "seedling","soil_type": "loamy","water_sensitivity": "high"},
+      "hardware_inventory": ["drip irrigation","soil moisture sensors","1000L water tank","automated pump","shade nets"],
+      "expected_weather_condition_to_simulate": "extreme heatwave"
+    },
+    {
+      "scenario_id": "farm_004",
+      "farmer_name": "Maria Gonzalez",
+      "location": {"city": "Seville","latitude": 37.3891,"longitude": -5.9845},
+      "crop_context": {"crop_name": "Olive","growth_stage": "fruit development","soil_type": "silty","water_sensitivity": "low"},
+      "hardware_inventory": ["drip irrigation","solar-powered pump","weather station"],
+      "expected_weather_condition_to_simulate": "normal clear skies"
+    },
+    {
+      "scenario_id": "farm_005",
+      "farmer_name": "Priya Sharma",
+      "location": {"city": "Pune","latitude": 18.5204,"longitude": 73.8567},
+      "crop_context": {"crop_name": "Rice","growth_stage": "tillering","soil_type": "clay","water_sensitivity": "moderate"},
+      "hardware_inventory": ["diesel water pump","irrigation channels","rice transplanter"],
+      "expected_weather_condition_to_simulate": "heavy monsoon rainfall"
+    },
+    {
+      "scenario_id": "farm_006",
+      "farmer_name": "Li Wei",
+      "location": {"city": "Chengdu","latitude": 30.5728,"longitude": 104.0668},
+      "crop_context": {"crop_name": "Strawberry","growth_stage": "fruiting","soil_type": "loamy","water_sensitivity": "high"},
+      "hardware_inventory": ["greenhouse","drip tape","humidity sensors","ventilation fans"],
+      "expected_weather_condition_to_simulate": "heavy thunderstorm"
+    },
+    {
+      "scenario_id": "farm_007",
+      "farmer_name": "James Walker",
+      "location": {"city": "Kansas City","latitude": 39.0997,"longitude": -94.5786},
+      "crop_context": {"crop_name": "Corn","growth_stage": "silking","soil_type": "silty","water_sensitivity": "high"},
+      "hardware_inventory": ["center pivot irrigation","weather station","tractor","sprayer"],
+      "expected_weather_condition_to_simulate": "dry windy conditions"
+    },
+    {
+      "scenario_id": "farm_008",
+      "farmer_name": "Amina Hassan",
+      "location": {"city": "Khartoum","latitude": 15.5007,"longitude": 32.5599},
+      "crop_context": {"crop_name": "Okra","growth_stage": "flowering","soil_type": "sandy","water_sensitivity": "moderate"},
+      "hardware_inventory": ["manual watering cans","buckets","basic hoes","no automated systems","no electricity"],
+      "expected_weather_condition_to_simulate": "severe heatwave"
+    },
+    {
+      "scenario_id": "farm_009",
+      "farmer_name": "Carlos Mendes",
+      "location": {"city": "Manaus","latitude": -3.119,"longitude": -60.0217},
+      "crop_context": {"crop_name": "Cassava","growth_stage": "vegetative","soil_type": "clay","water_sensitivity": "moderate"},
+      "hardware_inventory": ["machetes","hand tools","rainwater collection barrels"],
+      "expected_weather_condition_to_simulate": "heavy torrential rain"
+    },
+    {
+      "scenario_id": "farm_010",
+      "farmer_name": "Emily Johnson",
+      "location": {"city": "Lincoln","latitude": 40.8136,"longitude": -96.7026},
+      "crop_context": {"crop_name": "Soybean","growth_stage": "flowering","soil_type": "loamy","water_sensitivity": "moderate"},
+      "hardware_inventory": ["soil moisture sensors","drip irrigation","tractor","fertilizer spreader"],
+      "expected_weather_condition_to_simulate": "normal clear skies"
+    },
+    {
+      "scenario_id": "farm_011",
+      "farmer_name": "Youssef El Idrissi",
+      "location": {"city": "Agadir","latitude": 30.4278,"longitude": -9.5981},
+      "crop_context": {"crop_name": "Pepper","growth_stage": "fruiting","soil_type": "sandy","water_sensitivity": "high"},
+      "hardware_inventory": ["drip tape","500L water tank","manual valves"],
+      "expected_weather_condition_to_simulate": "extreme heatwave"
+    },
+    {
+      "scenario_id": "farm_012",
+      "farmer_name": "Grace Njeri",
+      "location": {"city": "Nakuru","latitude": -0.3031,"longitude": 36.08},
+      "crop_context": {"crop_name": "Beans","growth_stage": "pod filling","soil_type": "loamy","water_sensitivity": "moderate"},
+      "hardware_inventory": ["watering cans","shovels","hand sprayer"],
+      "expected_weather_condition_to_simulate": "dry windy conditions"
+    },
+    {
+      "scenario_id": "farm_013",
+      "farmer_name": "Nguyen Minh",
+      "location": {"city": "Can Tho","latitude": 10.0452,"longitude": 105.7469},
+      "crop_context": {"crop_name": "Cucumber","growth_stage": "flowering","soil_type": "clay","water_sensitivity": "high"},
+      "hardware_inventory": ["plastic greenhouse","drip irrigation","automatic fertigation unit"],
+      "expected_weather_condition_to_simulate": "heavy thunderstorm"
+    },
+    {
+      "scenario_id": "farm_014",
+      "farmer_name": "David Mwangi",
+      "location": {"city": "Eldoret","latitude": 0.5143,"longitude": 35.2698},
+      "crop_context": {"crop_name": "Wheat","growth_stage": "harvest-ready","soil_type": "silty","water_sensitivity": "low"},
+      "hardware_inventory": ["combine harvester","grain storage silo","tractor"],
+      "expected_weather_condition_to_simulate": "normal clear skies"
+    },
+    {
+      "scenario_id": "farm_015",
+      "farmer_name": "Sara Rossi",
+      "location": {"city": "Bologna","latitude": 44.4949,"longitude": 11.3426},
+      "crop_context": {"crop_name": "Spinach","growth_stage": "vegetative","soil_type": "loamy","water_sensitivity": "high"},
+      "hardware_inventory": ["manual watering cans","shade cloth","wheelbarrow","no automated systems"],
+      "expected_weather_condition_to_simulate": "severe heatwave"
+    }
+  ]
+}
