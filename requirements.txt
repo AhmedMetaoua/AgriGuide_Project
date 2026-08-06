@@ -1,0 +1,13 @@
+# Application UI and configuration
+streamlit
+python-dotenv
+
+# Market analysis and crop ranking
+chromadb
+sentence-transformers
+groq
+pandas
+tqdm
+
+# Document ingestion for the profitability knowledge base
+docling

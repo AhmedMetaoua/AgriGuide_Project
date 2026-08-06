@@ -9,9 +9,11 @@ test.py
 .claude
 
 # Virtual environments
+env/
+.venv/
+venv/
 agri_env/
 **/agri_env/
-venv/
 **/venv/
 
 # VS Code
