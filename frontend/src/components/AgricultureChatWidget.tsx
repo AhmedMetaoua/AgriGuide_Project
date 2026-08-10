@@ -15,7 +15,7 @@ import {
   type ChatParcelContext,
   type ChatSource,
 } from "@/lib/agricultureApi";
-import { useAuth } from "@/lib/auth-context";
+import { useAuth, SKIP_AUTH } from "@/lib/auth-context";
 
 type UiMessage = {
   id: string;
@@ -64,7 +64,7 @@ export function AgricultureChatWidget({
         .map((m) => ({ role: m.role, content: m.text }));
       return sendChatMessage(
         { question, history, parcel_context: parcelContext },
-        token,
+        SKIP_AUTH ? null : token,
       );
     },
     onSuccess: (data) => {
