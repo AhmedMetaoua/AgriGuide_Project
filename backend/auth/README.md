@@ -1,64 +1,61 @@
 # Auth
 
-**Rôle** : inscription / connexion, et gestion du profil farmer (matériel
-agricole détenu + terrains déclarés). C'est le premier service du projet
-réellement connecté à PostgreSQL (les autres agents utilisent encore des
-données simulées, voir `docs/team_guide.md`).
+**Status: ✅ Fully real — the platform's foundational, best-tested
+service.**
 
-## Rôles
+## Role
+Sign-up/sign-in and farmer profile management (equipment + declared
+terrains). Every other agent depends on the JWT this service issues
+and, indirectly, on the `terrains`/`users` rows it owns.
 
-- `farmer` : accès à toutes les fonctionnalités (conseillers, marketplace en
-  écriture...). Doit déclarer à l'inscription son matériel agricole détenu et
-  au moins un terrain (tracé sur la carte + nom de zone).
-- `acheteur` : accès en lecture seule au marketplace uniquement (ne peut pas
-  déposer d'annonce).
+## Roles
+- **farmer** — full access (advisors + marketplace write). Must declare
+  owned equipment and at least one terrain at signup.
+- **acheteur** — marketplace read-only, no advisor access.
 
-## Lancer le service
+## Endpoints
+- `POST /auth/signup` — `{email, password, nom, telephone?, role,
+  equipements?, terrains?}` → creates the account (+ equipment/terrains
+  if `role=farmer`) and returns a token.
+- `POST /auth/signin` → token + profile.
+- `GET /auth/me` → full profile (`Authorization: Bearer <token>`).
+- `PUT /auth/me/equipements` — replace declared equipment (farmer only).
+- `POST/PUT/DELETE /auth/me/terrains/{id}` — terrain CRUD (farmer only).
 
+## Security
+- Passwords hashed with bcrypt (`passlib`), never stored in plaintext.
+- JWT session (HS256, 7-day expiry, `sub` = user_id).
+- ⚠️ `JWT_SECRET_KEY` falls back to a hardcoded
+  `"dev-secret-change-me-in-production"` string if unset — **must be
+  set explicitly before any real deployment.**
+- CORS open in dev only — restrict before prod.
+
+## Cross-service auth (no shared library)
+Other agents (e.g. Business) independently re-implement HS256
+verification against the same `JWT_SECRET_KEY` env var, rather than
+importing a shared package or calling back to this service. Correctly
+implemented (constant-time signature comparison, `exp`/`alg`/`sub`
+checks) but duplicated — a shared `auth` package would remove the risk
+of the implementations drifting apart.
+
+## Data
+- Real PostGIS geometry for terrains: frontend-drawn (lat,lng) points
+  → WKT `POLYGON` via `ST_GeomFromText`; server-side area fallback
+  (spherical-excess formula) if the client doesn't send
+  `superficie_ha`.
+- `psycopg2` pool with a 5s `connect_timeout` so sign-in fails fast
+  instead of hanging when Postgres is down.
+
+## Dev convenience (frontend)
+`VITE_SKIP_AUTH=true` in a gitignored `.env.local` injects a fake
+"dev-bypass-user" session — mirrors `agent_business`'s
+`BUSINESS_AUTH_DISABLED` escape hatch. Both are dev-only; confirm
+neither is set in any deployed environment.
+
+## Run locally
 ```bash
 cd backend/auth
 pip install -r requirements.txt
-# Nécessite une base PostgreSQL démarrée avec database/schema.sql :
-docker compose up -d db   # depuis la racine du repo — expose le port hôte 5434
-                            # (5432 est souvent déjà pris par un Postgres natif)
-python -m app.tests.test_endpoints     # tests des endpoints FastAPI
-uvicorn app.main:app --reload --port 8001   # lancer le serveur (docs sur /docs)
+docker compose up -d db          # exposes Postgres on host port 5434
+uvicorn app.main:app --reload --port 8001
 ```
-
-Variables d'environnement (voir `.env.example`) :
-- `DATABASE_URL` — connexion PostgreSQL
-- `JWT_SECRET_KEY` — secret de signature des tokens de session
-
-## Endpoints
-
-- `POST /auth/signup` — `{email, password, nom, telephone?, role, equipements?, terrains?}`
-  → crée le compte (+ matériel/terrains si `role = farmer`) et retourne un token
-- `POST /auth/signin` — `{email, password}` → token + profil utilisateur
-- `GET /auth/me` — profil complet de l'utilisateur connecté (`Authorization: Bearer <token>`)
-- `PUT /auth/me/equipements` — remplace la liste de matériel déclaré (farmer uniquement)
-- `POST /auth/me/terrains` — ajoute un terrain
-- `PUT /auth/me/terrains/{id}` — modifie un terrain (nom, contour, région)
-- `DELETE /auth/me/terrains/{id}` — supprime un terrain
-
-Toutes ces routes "modifiables après" répondent à la contrainte : "ces
-informations sont changeables après dans la plateforme" (page Profil côté
-frontend).
-
-## Matériel agricole (`EquipementType`)
-
-`tracteur`, `cultivateur`, `fraise_rotative`, `planteuse`,
-`moissonneuse_batteuse`, `remorque_agricole`, `pulverisateur`,
-`tunnel_plastique`. Affichés avec une icône générique en attendant les
-vraies images (voir `frontend/src/lib/equipements.ts`).
-
-## Sécurité
-
-- Mots de passe hachés avec bcrypt (`passlib`), jamais stockés en clair.
-- Session par JWT (7 jours), transmis par le frontend dans l'en-tête
-  `Authorization: Bearer <token>`.
-- `CORS` ouvert en dev uniquement (`app/main.py`) — à restreindre en prod.
-
-## Sortie (écrit en base)
-- `users` (colonne `role` ajoutée à la table existante)
-- `farmer_equipements` (nouvelle table)
-- `terrains` (réutilise la table existante — `nom` sert de nom de zone)
