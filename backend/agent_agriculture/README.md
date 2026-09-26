@@ -1,7 +1,5 @@
 # Agent Agriculture (Agricultural Advisor)
 
-**Status: ✅ Production-real — the most complete agent in the monorepo.**
-
 ## Role
 Feature 1 of the AgriAdvisor platform. Given a farmer's parcel, produces a
 full land profile (soil, satellite, climate, RPG history) and a ranked
