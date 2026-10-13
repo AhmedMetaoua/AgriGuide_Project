@@ -2,7 +2,7 @@
 
 **Think Smart. Farm Smarter.**
 
-Presented by **DerjaGPT / TAIAN**
+Presented by **DerjaGPT / TALAN**
 
 AgriMent is a smart agricultural platform that combines AI agents, machine
 learning models, and RAG (Retrieval-Augmented Generation) to help farmers
