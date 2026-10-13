@@ -10,7 +10,7 @@ _REPO_ROOT = _APP_DIR.parent.parent  # AgriGuide/
 
 class Settings(BaseSettings):
     mistral_api_key: str = ""
-    mistral_model: str = "mistral-medium-latest"
+    mistral_model: str = "mistral-large-latest"  # override with MISTRAL_MODEL in the root .env
     open_meteo_base: str = "https://api.open-meteo.com/v1/forecast"
 
     # Racine du repo d'abord (MISTRAL_API_KEY partagée), puis .env local optionnel.

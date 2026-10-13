@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-CHAT_MODEL = "mistral-large-latest"
+CHAT_MODEL = os.getenv("MISTRAL_MODEL", "mistral-large-latest")
 
 SYSTEM_PROMPT = """Tu es AgriVision AI, un assistant d'analyse du marché agricole français.
 Réponds en français, de façon claire et concise. Utilise uniquement le contexte

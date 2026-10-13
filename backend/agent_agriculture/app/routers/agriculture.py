@@ -358,3 +358,31 @@ async def analyze(req: AnalyzeRequest):
         report=report,
         warnings=warnings,
     )
+
+
+@router.get("/land-profile/{terrain_id}")
+async def get_land_profile(terrain_id: str):
+    """
+    Relit le land_profile le plus récent persisté pour ce terrain (et ses
+    crop_recommendations complètes), sans relancer d'analyse.
+
+    Comble un vrai trou : `/analyze` écrit `land_profiles` +
+    `crop_recommendations` en base depuis le début (si `terrain_id` est
+    fourni), mais jusqu'ici rien ne pouvait relire ce qui avait été
+    écrit — chaque consommateur (le widget chat excepté, voir
+    get_user_chat_profile) devait soit tout recalculer, soit s'appuyer
+    sur un cache localStorage côté frontend.
+
+    404 si ce terrain n'a jamais été analysé — c'est un état normal et
+    attendu, pas une erreur serveur : à distinguer explicitement d'un 500.
+    Pas de vérification d'ownership ici, par cohérence avec le reste du
+    service (voir persistence_service.get_terrain : "cet agent n'a aucune
+    notion d'ownership/JWT, c'est appliqué par l'appelant").
+    """
+    profile = persistence_service.get_latest_land_profile(terrain_id)
+    if not profile:
+        raise HTTPException(
+            status_code=404,
+            detail="Ce terrain n'a jamais été analysé (aucun land_profile persisté).",
+        )
+    return profile

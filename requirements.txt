@@ -8,6 +8,9 @@
 # Optional heavy ML stack (Agriculture RAG / TempCNN):
 #   pip install -r requirements-ml.txt
 
+# --- Code interne partagé (JWT auth commune — orchestrator + agent_business) ---
+-e ./backend/shared
+
 # --- HTTP APIs ---
 fastapi==0.115.0
 uvicorn[standard]==0.30.6
@@ -35,7 +38,9 @@ tqdm==4.66.5
 
 # --- Geospatial (Agriculture) ---
 shapely==2.0.6
-pyproj==3.6.1
+pyproj  # pin relâché : pyproj==3.6.1 n'a pas de wheel prébuilt pour toutes les
+        # versions Python/plateformes et échoue à se compiler sans PROJ_DIR
+        # installé localement (voir pyproj4.github.io/pyproj/stable/installation.html)
 tifffile==2024.9.20
 
 # --- LLM / agents ---

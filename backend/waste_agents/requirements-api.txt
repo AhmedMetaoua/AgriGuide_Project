@@ -1,0 +1,9 @@
+# Dépendances minimales du service HTTP (api/main.py) — lecture seule de
+# knowledge/canonical_knowledge.json. Volontairement sans sentence-transformers
+# (torch, ~2 Go), streamlit, qdrant-client ni mistralai : ils ne servent qu a la
+# recherche/ingestion live (UI Streamlit), pas au parcours farmer.
+fastapi>=0.111.0
+uvicorn[standard]>=0.30.0
+pydantic>=2.7.0
+pydantic-settings>=2.3.0
+python-dotenv>=1.0.1

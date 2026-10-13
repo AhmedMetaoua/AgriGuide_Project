@@ -28,6 +28,7 @@ class Settings(BaseSettings):
     )
 
     mistral_api_key: str
+    mistral_model: str = "mistral-large-latest"  # override with MISTRAL_MODEL in the root .env
     qdrant_url: str
     qdrant_api_key: str = ""
     qdrant_collection_name: str

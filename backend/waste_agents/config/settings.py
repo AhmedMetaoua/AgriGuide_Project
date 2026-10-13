@@ -25,7 +25,7 @@ class Settings(BaseSettings):
     """
 
     model_config = SettingsConfigDict(
-        env_file=str(PROJECT_ROOT / ".env"),
+        env_file=(str(PROJECT_ROOT.parent.parent / ".env"), str(PROJECT_ROOT / ".env")),  # repo root first, then local override
         env_file_encoding="utf-8",
         extra="ignore",
         case_sensitive=False,

@@ -23,11 +23,26 @@ services:
       - "6379:6379"
 
   orchestrator:
-    build: ./backend/orchestrator
+    build:
+      # Contexte = racine du repo, pas ./backend/orchestrator : nécessaire
+      # pour que le Dockerfile puisse COPY backend/shared (JWT auth commune
+      # avec agent_business, voir backend/shared/README.md).
+      context: .
+      dockerfile: backend/orchestrator/Dockerfile
     env_file: .env
+    environment:
+      # Noms de service Docker (réseau interne compose), pas localhost :
+      # les autres services écoutent tous sur le port interne 8000, quel
+      # que soit le port host mappé (ou l'absence de mapping) ci-dessous.
+      AGENT_AGRICULTURE_URL: http://agent_agriculture:8000
+      AGENT_BUSINESS_URL: http://agent_business:8000
+      AGENT_MONITORING_URL: http://agent_monitoring:8000
+      AGENT_REGULATION_URL: http://agent_regulation:8000
+      AGENT_AUTH_URL: http://auth:8000
+      AGENT_WASTE_URL: http://waste_agents:8000
     ports:
       - "8000:8000"
-    depends_on: [db, redis]
+    depends_on: [db, redis, agent_agriculture, agent_business]
 
   auth:
     build: ./backend/auth
@@ -37,15 +52,25 @@ services:
     depends_on: [db]
 
   agent_agriculture:
-    build: ./backend/agent_agriculture
+    build:
+      # Même remarque que orchestrator/agent_business ci-dessus : contexte =
+      # racine du repo pour pouvoir COPY backend/shared.
+      context: .
+      dockerfile: backend/agent_agriculture/Dockerfile
     env_file: .env
+    ports:
+      - "8002:8000"
     depends_on: [db]
     volumes:
       - agri_chroma_store:/app/chroma_store
       - agri_dl_checkpoints:/app/dl_checkpoints
 
   agent_business:
-    build: ./backend/agent_business
+    build:
+      # Même remarque que le service orchestrator ci-dessus : contexte =
+      # racine du repo pour pouvoir COPY backend/shared.
+      context: .
+      dockerfile: backend/agent_business/Dockerfile
     env_file: .env
     environment:
       MARKET_DATA_DIR: /data/market
@@ -55,11 +80,15 @@ services:
       - ./data:/data/market:ro
       - ./backend/agent_business/app/market_intelligence/data:/data/profit:ro
       - business_market_store:/app/app/market_intelligence/rag/vector_store
+    ports:
+      - "8006:8000"
     depends_on: [db]
 
   agent_regulation:
     build: ./backend/agent_regulation
     env_file: .env
+    ports:
+      - "8005:8000"
     depends_on: [db]
 
   agent_monitoring:
@@ -69,10 +98,12 @@ services:
       - "8003:8000"
     depends_on: [db]
 
-  marketplace:
-    build: ./backend/marketplace
+  waste_agents:
+    build: ./backend/waste_agents
     env_file: .env
-    depends_on: [db]
+    ports:
+      - "8004:8000"
+
 
 volumes:
   db_data:

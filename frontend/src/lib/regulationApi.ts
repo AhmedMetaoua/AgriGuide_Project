@@ -7,7 +7,7 @@
  *
  * URL du service : `VITE_AGENT_REGULATION_URL` (défaut : http://localhost:8005,
  * cf. `backend/agent_regulation/README.md` — `uvicorn app.main:app --reload --port 8005`).
- * Port distinct de Auth (8001) et Business (8000) pour lancer les services en local.
+ * Port distinct de Auth (8001) et Business (8006) pour lancer les services en local.
  */
 
 const REGULATION_API_BASE_URL: string =

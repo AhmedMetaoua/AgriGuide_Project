@@ -41,9 +41,12 @@ def _sample_weather() -> WeatherData:
     )
 
 
-def test_recommend_crops_returns_five_sorted():
+def test_recommend_crops_scores_every_profile_sorted():
     recs = ml_service.recommend_crops(_sample_soil(), _sample_weather())
-    assert len(recs) == 5
+    # One recommendation per crop profile (9 today) — derived, not hardcoded, so
+    # adding a crop to the scorer doesn't silently break this test again.
+    assert len(recs) == len(ml_service._CROP_PROFILES)
+    assert len({r.crop for r in recs}) == len(recs)
     assert all(0.0 <= r.suitability_score <= 1.0 for r in recs)
     scores = [r.suitability_score for r in recs]
     assert scores == sorted(scores, reverse=True)
@@ -72,7 +75,7 @@ def test_analyze_rejects_unresolved_point_without_terrain():
 
 if __name__ == "__main__":
     test_health()
-    test_recommend_crops_returns_five_sorted()
+    test_recommend_crops_scores_every_profile_sorted()
     test_agro_calc_estimate_has_no_negative_values()
     test_analyze_rejects_unresolved_point_without_terrain()
     print("\nTous les tests (hors réseau) sont passés.")

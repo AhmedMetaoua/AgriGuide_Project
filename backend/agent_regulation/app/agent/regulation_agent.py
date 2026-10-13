@@ -99,12 +99,12 @@ class RegulationAgent:
         settings = get_settings()
         api_key = settings.mistral_api_key
         self._tool_selection_llm = ChatMistralAI(
-            model="mistral-small-latest",
+            model=settings.mistral_model,
             api_key=api_key,
             temperature=0,
         )
         self._final_answer_llm = ChatMistralAI(
-            model="mistral-large-latest",
+            model=settings.mistral_model,
             api_key=api_key,
             temperature=0,
         )

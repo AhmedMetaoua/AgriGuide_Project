@@ -1,56 +1,28 @@
-"""HS256 JWT validation compatible with the Auth service (same secret / payload)."""
+"""
+Politique d'auth de agent_agriculture : décodage via agriment_shared (voir
+ce module pour la justification — mécanisme partagé, politique locale à
+chaque service). L'auth reste optionnelle ici, inchangé : c'est une
+politique propre à ce service (l'analyse d'une parcelle ne nécessite pas
+de compte, seule sa persistance contre un terrain_id en profiterait).
+"""
 from __future__ import annotations
 
-import base64
-import hashlib
-import hmac
-import json
-import os
-import time
-
+from agriment_shared.auth import InvalidToken, decode_access_token, split_bearer
 from fastapi import Header, HTTPException
 
 
-JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "dev-secret-change-me-in-production")
-
-
-def _decode_segment(segment: str) -> bytes:
-    return base64.urlsafe_b64decode(segment + "=" * (-len(segment) % 4))
-
-
-def decode_access_token(token: str) -> str:
-    try:
-        header_segment, payload_segment, signature_segment = token.split(".")
-        signed = f"{header_segment}.{payload_segment}".encode()
-        expected = hmac.new(JWT_SECRET_KEY.encode(), signed, hashlib.sha256).digest()
-        actual = _decode_segment(signature_segment)
-        if not hmac.compare_digest(expected, actual):
-            raise ValueError("signature")
-        header = json.loads(_decode_segment(header_segment))
-        payload = json.loads(_decode_segment(payload_segment))
-        if header.get("alg") != "HS256":
-            raise ValueError("algorithm")
-        if payload.get("exp") is not None and float(payload["exp"]) < time.time():
-            raise ValueError("expired")
-        user_id = payload.get("sub")
-        if not user_id:
-            raise ValueError("subject")
-        return str(user_id)
-    except Exception as exc:
-        raise ValueError("Token invalide ou expiré") from exc
-
-
 def get_optional_user_id(authorization: str | None = Header(default=None)) -> str | None:
-    """Return user id when a valid Bearer token is present; None if absent.
+    """Renvoie le user_id si un Bearer token valide est présent, None si absent.
 
-    Invalid/expired tokens still raise 401 so a stale session is not silently
-    treated as anonymous.
+    Un token invalide/expiré lève quand même 401 — une session périmée
+    n'est pas silencieusement traitée comme anonyme.
     """
     if not authorization:
         return None
-    if not authorization.lower().startswith("bearer "):
+    token = split_bearer(authorization)
+    if token is None:
         raise HTTPException(status_code=401, detail="En-tête Authorization invalide.")
     try:
-        return decode_access_token(authorization.split(" ", 1)[1].strip())
-    except ValueError:
+        return decode_access_token(token)
+    except InvalidToken:
         raise HTTPException(status_code=401, detail="Session invalide, reconnectez-vous.")

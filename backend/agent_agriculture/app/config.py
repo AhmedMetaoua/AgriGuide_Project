@@ -48,7 +48,7 @@ def _rewrite_docker_db_host_for_local(url: str) -> str:
 class Settings(BaseSettings):
     # --- LLM (Mistral) ---
     mistral_api_key: str = ""  # free tier key from console.mistral.ai
-    mistral_model: str = "mistral-medium-latest"
+    mistral_model: str = "mistral-large-latest"  # override with MISTRAL_MODEL in the root .env
     mistral_embed_model: str = "mistral-embed"
 
     # --- Fallback embeddings (used if no Mistral key / quota hit) ---

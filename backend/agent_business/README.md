@@ -1,69 +1,103 @@
-# Agent Business (Business Advisor)
+# Business Advisor
 
-**Status: ✅ Production-real.**
+**Status: ✅ Real — financial scenarios, market intelligence and persisted decisions.**
 
 ## Role
-Consumes Agriculture's `crop_recommendations`, turns each candidate crop
-into a fully costed, scored scenario, and runs a human-in-the-loop
-confirmation flow. Writes `business_scenarios`, `farmer_decisions`,
-`decision_allocations`.
+Takes the real `crop_recommendations` produced by the Agriculture agent plus
+the farmer's budget, and returns **three financially detailed scenarios**. It
+records the scenario the farmer confirms and exposes that decision as the
+crop context for the Monitoring agent.
 
-## Scoring (deterministic — the LLM never sets the score)
+## Scoring is deterministic
+```text
+score = 35% profitability + 20% risk control + 20% budget fit
+      + 25% agronomic compatibility (from Agriculture)
 ```
-score = 0.35·profit_normalisé + 0.20·(1−risque_normalisé)
-      + 0.20·fit_budget + 0.25·compatibilité_agronomique
+The LLM only summarizes market documents (demand, competition, justification).
+It never computes finances and never influences the ranking score.
+
+## Market intelligence pipeline
 ```
-Weights are named constants in `scoring.py`, easy to recalibrate.
+data/
+  FDS_IPPAP_*.csv        → Agreste price-index trends (pandas)
+  FranceAgriMer_*.pdf    → market bulletins (local vector index + Mistral)
+        ↓
+market_intelligence.provider.get_market_price()
+        ↓
+market_study.estimer_marche() → Business scenarios
+```
 
-## Pipeline per candidate crop (`scenario_generator.py`)
-1. **Market study** — price × yield, price adjusted ±15% by a real
-   Agreste IPPAP trend (`price_trends.py`, pandas over real CSVs).
-2. **Cost estimate** (`financial_service.py`) — 3-tier: operator CSV →
-   bottom-up from Agriculture's N/P/K + irrigation + pesticide needs →
-   hardcoded fallback. Each tier stamped with a confidence (0.30–0.95)
-   and `is_fallback` flag. **No capex/opex split** — one flat
-   `cout_production_eur_par_ha` blending fixed seed/machinery cost with
-   N/P/K, irrigation, and pesticide cost.
-3. **Risk study** (`risk_study.py`) — `risque = probabilité × impact`,
-   probability blending agronomic incompatibility (45%), market
-   downside (25%), yield volatility (20%), cost uncertainty (10%);
-   auto-generates a named risk + mitigation text + mitigation cost.
-4. **Financial indicators** — revenue, cost, profit, margin, ROI,
-   break-even price/yield, budget gap — all formula-derived and
-   returned with full `detail_calcul` (formulas + values + sources)
-   for an in-app "Details" view.
-5. **Market intelligence RAG** (`rank_crops.py`) — retrieves
-   FranceAgriMer PDF bulletins from a hand-rolled numpy+JSON vector
-   store (`local_store.py` — not actually Chroma, despite the naming;
-   built to dodge chromadb/hnswlib native-build issues on Windows),
-   blends with the Agreste trend, and asks Mistral for a strict-JSON
-   verdict — explicitly forbidden from setting the ranking score.
+| Signal | Source |
+|---|---|
+| Price trend | Agreste IPPAP (CSV) |
+| Demand / competition / justification | FranceAgriMer PDFs via RAG + Mistral |
+| Price €/kg | Absolute price scale adjusted by the real IPPAP trend (IPPAP is an index, not €) |
+| Yield | FAOSTAT history, explicit fallback scale |
+| Costs | Operator CSV, or input costs computed from Agriculture's needs, explicit fallback |
+| Risk | Agronomic compatibility + market + volatility + cost-data quality |
 
-## Human-in-the-loop
-- `POST /business/scenarios` → up to 3 ranked scenarios.
-- `POST /business/decision` → validates allocation ≤ available ha, no
-  duplicate scenario reuse, allocation ≤ advised area, final cost ≤
-  budget; persists to Postgres; returns `date_maturite_prevue` per
-  crop (feeds Monitoring/Marketplace downstream).
-- The backend schema (`FarmerDecisionRequest`) supports **splitting one
-  terrain across several scenarios/crops** in one decision, but the
-  current frontend (`business.tsx`) only ever sends **one** allocation
-  at a time, at the scenario's full advised area — no partial-area or
-  multi-crop split UI yet.
-- Terrain ownership/area is re-verified server-side against Auth's
-  `terrains` table on every call — the client-supplied area is never
-  trusted.
+RAG turns on automatically when the local vector index exists and
+`MISTRAL_API_KEY` is set; force it off with `MARKET_RAG_ENABLED=0`.
+Each scenario reports gross revenue, total cost, profit, margin, ROI,
+break-even thresholds, budget gap, risk explanations and a data-confidence
+level. Scenarios whose costs came from the fallback scale are flagged
+`cout_fallback`.
 
-## Known gaps
-- README (pre-revision) still listed "Postgres persistence of
-  decisions" as a future step — it's already fully implemented.
-- No capex/opex distinction (see above) if that split is ever needed.
-- Test coverage is strong for endpoints/decision logic but thin on the
-  RAG ranking path.
+> The market data folder (`FDS_IPPAP_*.csv`, `FranceAgriMer_*.pdf`) is not
+> committed. Without it the service still runs but falls back to its explicit
+> reference baselines and reports lower data confidence.
+
+## Endpoints
+| Method | Route | Description |
+|---|---|---|
+| `POST` | `/business/scenarios` | Generate the 3 scenarios for a terrain |
+| `POST` | `/business/decision` | Confirm the farmer's chosen scenario (human-in-the-loop) |
+| `GET` | `/business/decisions/{terrain_id}/latest` | Latest confirmed decision — consumed by Monitoring |
+| `GET` | `/health` | Status + market diagnostics (`market.rag_active`) |
+
+All business routes require the Bearer JWT issued by Auth (decoded through
+[`agriment_shared`](../shared/README.md)). Terrain existence and ownership are
+checked server-side, and the area stored in PostgreSQL is used instead of any
+value sent by the browser. Scenarios and decisions are persisted
+(`business_scenarios`, `farmer_decisions`, `decision_allocations`).
 
 ## Run locally
 ```bash
 cd backend/agent_business
+python -m venv .venv && . .venv/bin/activate     # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-uvicorn app.main:app --reload --port 8000
+
+# One-time (or after adding files to data/): index the PDFs + CSVs
+python -m app.market_intelligence.rag.ingest
+
+# Port 8006, not 8000 — 8000 belongs to the orchestrator
+uvicorn app.main:app --reload --port 8006
 ```
+Embeddings use `mistral-embed`, so `MISTRAL_API_KEY` must be in the root
+`.env`. For an already-created database, apply once:
+```bash
+psql "$DATABASE_URL" -f database/migration_business_financials.sql
+psql "$DATABASE_URL" -f database/migration_decision_allocations_scenario_cascade.sql
+```
+
+## Configuration
+| Variable | Purpose |
+|---|---|
+| `MISTRAL_API_KEY`, `MISTRAL_MODEL` | LLM for market summaries / crop ranking (default `mistral-large-latest`) |
+| `MARKET_DATA_DIR` | Folder with the IPPAP CSVs and FranceAgriMer PDFs (default: `./data` at repo root) |
+| `MARKET_RAG_ENABLED` | `0` to disable RAG |
+| `BUSINESS_FAO_YIELD_CSV` | Override the bundled FAOSTAT yield CSV |
+| `BUSINESS_COST_DATA_CSV` | Cost table; accepts `culture`/`crop`, `cost_per_ha_eur`/`cout_eur_par_ha`, optional `source`, `year` |
+| `BUSINESS_PERSISTENCE_MODE=memory` | Run without PostgreSQL (tests) |
+| `BUSINESS_AUTH_DISABLED=1` | **Dev/test only** — skips JWT checks |
+
+## Tests
+```bash
+python -m pytest backend/agent_business/app/tests
+```
+The suite runs in `memory` persistence mode with auth disabled.
+
+## Next steps
+1. Live RNM price feed for €/kg
+2. Real BSV (plant-health bulletin) data for risk
+3. PDF planning export after scenario confirmation

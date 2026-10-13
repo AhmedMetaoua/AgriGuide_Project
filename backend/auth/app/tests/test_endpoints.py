@@ -42,9 +42,11 @@ def test_signup_acheteur():
     return data
 
 
-def test_signup_farmer_requires_terrain():
+def test_signup_farmer_without_terrain_allowed():
+    # Le formulaire d'inscription envoie `terrains: []` : les parcelles se
+    # déclarent ensuite depuis la page Agriculture (POST /auth/me/terrains).
     payload = {
-        "email": _unique_email("farmer-invalide"),
+        "email": _unique_email("farmer-sans-terrain"),
         "password": "motdepasse123",
         "nom": "Jean Sans Terre",
         "role": "farmer",
@@ -52,8 +54,9 @@ def test_signup_farmer_requires_terrain():
         "terrains": [],
     }
     r = client.post("/auth/signup", json=payload)
-    assert r.status_code == 422, r.text
-    print("[OK] /auth/signup rejette un farmer sans terrain (422)")
+    assert r.status_code == 201, r.text
+    assert r.json()["user"]["terrains"] == []
+    print("[OK] /auth/signup accepte un farmer sans terrain (terrains ajoutés plus tard)")
 
 
 def test_signup_farmer():
@@ -159,7 +162,7 @@ def test_unauthenticated_me_rejected():
 if __name__ == "__main__":
     test_health()
     acheteur_data = test_signup_acheteur()
-    test_signup_farmer_requires_terrain()
+    test_signup_farmer_without_terrain_allowed()
     farmer_data = test_signup_farmer()
     test_signup_duplicate_email_rejected(farmer_data["user"]["email"])
     farmer_email = farmer_data["user"]["email"]

@@ -24,3 +24,6 @@ venv/
 
 # Terrain generated data
 backend/agent_agriculture/app/terrain_data/
+
+# Editable-install artifact from `pip install -e ./backend/shared`
+backend/shared/*.egg-info/

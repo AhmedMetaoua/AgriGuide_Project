@@ -109,6 +109,80 @@ def save_crop_recommendations(land_profile_id: str, recommendations: list[CropRe
             )
 
 
+def get_latest_land_profile(terrain_id: str) -> Optional[dict]:
+    """
+    Lit le land_profile le plus récent pour ce terrain, avec ses
+    crop_recommendations complètes (contrairement à get_user_chat_profile
+    ci-dessous, qui ne projette que rang/culture/score_compatibilite pour
+    le widget de chat).
+
+    `/analyze` INSERT un nouveau land_profiles à chaque appel (pas
+    d'upsert) — un terrain peut donc avoir plusieurs lignes au fil du
+    temps, d'où le tri + LIMIT 1 pour ne lire que la plus récente.
+    Renvoie None si ce terrain n'a jamais été analysé (aucune ligne) —
+    c'est le signal "jamais analysé", distinct d'une erreur.
+    """
+    try:
+        terrain_uuid = UUID(terrain_id)
+    except (TypeError, ValueError):
+        return None
+
+    with get_cursor() as cur:
+        cur.execute(
+            """
+            SELECT id, sol_data, satellite_data, rpg_historique, cultures_voisines,
+                   climat_data, elevation_m, date_generation
+            FROM land_profiles
+            WHERE terrain_id = %s
+            ORDER BY date_generation DESC NULLS LAST, id DESC
+            LIMIT 1
+            """,
+            (str(terrain_uuid),),
+        )
+        profile = cur.fetchone()
+        if not profile:
+            return None
+
+        cur.execute(
+            """
+            SELECT rang, culture, score_compatibilite, cycle_jours,
+                   besoins_pesticides, besoins_engrais, besoins_irrigation, feature_importance
+            FROM crop_recommendations
+            WHERE land_profile_id = %s
+            ORDER BY rang
+            """,
+            (str(profile["id"]),),
+        )
+        crop_rows = cur.fetchall()
+
+    return {
+        "land_profile_id": str(profile["id"]),
+        "terrain_id": terrain_id,
+        "date_generation": profile["date_generation"].isoformat()
+        if profile.get("date_generation") is not None
+        else None,
+        "sol_data": profile["sol_data"],
+        "satellite_data": profile["satellite_data"],
+        "rpg_historique": profile["rpg_historique"],
+        "cultures_voisines": profile["cultures_voisines"],
+        "climat_data": profile["climat_data"],
+        "elevation_m": float(profile["elevation_m"]) if profile["elevation_m"] is not None else None,
+        "crop_recommendations": [
+            {
+                "rang": row["rang"],
+                "culture": row["culture"],
+                "score_compatibilite": float(row["score_compatibilite"]),
+                "cycle_jours": row["cycle_jours"],
+                "besoins_pesticides": row["besoins_pesticides"],
+                "besoins_engrais": row["besoins_engrais"],
+                "besoins_irrigation": row["besoins_irrigation"],
+                "feature_importance": row["feature_importance"],
+            }
+            for row in crop_rows
+        ],
+    }
+
+
 def get_user_chat_profile(user_id: str) -> Optional[dict]:
     """Compact account snapshot for the chat widget — no password, no GeoJSON.
 

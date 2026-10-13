@@ -5,12 +5,14 @@
  * `backend/agent_business/app/models/schemas.py` pour éviter tout mapping
  * caché entre les deux couches.
  *
- * URL du service : `VITE_AGENT_BUSINESS_URL` (défaut : http://localhost:8000,
+ * URL du service : `VITE_AGENT_BUSINESS_URL` (défaut : http://localhost:8006,
  * cf. `backend/agent_business/README.md` — `uvicorn app.main:app --reload`).
+ * Port 8006, pas 8000 : 8000 est réservé à l'orchestrateur
+ * (`backend/orchestrator`), voir `docker-compose.yml`.
  */
 
 const BUSINESS_API_BASE_URL: string =
-  (import.meta.env.VITE_AGENT_BUSINESS_URL as string | undefined) ?? "http://localhost:8000";
+  (import.meta.env.VITE_AGENT_BUSINESS_URL as string | undefined) ?? "http://localhost:8006";
 
 // ---------------------------------------------------------------------------
 // Entrée — reflète CropRecommendation / BusinessAdvisorRequest

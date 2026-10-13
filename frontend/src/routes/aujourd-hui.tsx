@@ -34,11 +34,13 @@ import {
   type SpendEntry,
 } from "@/lib/spendTracking";
 import {
-  analyzeMonitoringDay,
   MonitoringApiError,
+  type AnalyzeRequest,
   type AnalyzeResponse,
   type CropAlert,
 } from "@/lib/monitoringApi";
+import { loadDailyBriefing } from "@/lib/orchestratorApi";
+import { waterSensitivityFromIrrigation } from "@/lib/waterSensitivity";
 import {
   AlertTriangle,
   Bell,
@@ -109,15 +111,6 @@ function terrainCentroid(points: LatLng[]): { lat: number; lon: number } | null 
   const lat = points.reduce((s, p) => s + p[0], 0) / points.length;
   const lon = points.reduce((s, p) => s + p[1], 0) / points.length;
   return { lat, lon };
-}
-
-function mapWaterSensitivity(niveau: unknown): string | undefined {
-  if (typeof niveau !== "string") return undefined;
-  const n = niveau.toLowerCase();
-  if (n === "eleve" || n === "élevé" || n === "high") return "high";
-  if (n === "modere" || n === "modéré" || n === "moderate") return "moderate";
-  if (n === "faible" || n === "low") return "low";
-  return undefined;
 }
 
 function formatEuro(n: number) {
@@ -473,7 +466,9 @@ function Page() {
   }, [decision?.decision_id]);
 
   const analyzeMutation = useMutation({
-    mutationFn: analyzeMonitoringDay,
+    // Orchestrateur d'abord (JWT réel), repli direct Monitoring sinon — voir
+    // lib/orchestratorApi.ts.
+    mutationFn: (request: AnalyzeRequest) => loadDailyBriefing(request, token),
     onSuccess: (data) => {
       setBriefing(data);
       setDone({});
@@ -483,19 +478,22 @@ function Page() {
   const totalHa = decision?.superficie_totale_allouee_ha ?? 0;
   const allocations = decision?.allocations ?? [];
 
-  useEffect(() => {
-    if (!user || !terrain || !decision) return;
+  // Requête de briefing complète (repli direct Monitoring). Via l'orchestrateur,
+  // seuls terrain/ferme/localisation/équipement sont utilisés : crops[] et la
+  // sensibilité hydrique y sont reconstruits côté serveur.
+  const buildAnalyzeRequest = (): AnalyzeRequest | null => {
+    if (!user || !terrain || !decision) return null;
     const centroid = terrainCentroid(terrain.points);
-    if (!centroid) return;
+    if (!centroid) return null;
 
     const waterByCrop = new Map(
       (cropRecs ?? []).map((c) => [
         c.culture,
-        mapWaterSensitivity(c.besoins_irrigation?.niveau),
+        waterSensitivityFromIrrigation(c.besoins_irrigation),
       ]),
     );
 
-    analyzeMutation.mutate({
+    return {
       farmer_name: user.nom,
       terrain_id: terrain.id,
       location: {
@@ -509,7 +507,13 @@ function Page() {
         water_sensitivity: waterByCrop.get(a.culture) ?? undefined,
       })),
       hardware_inventory: (user.equipements ?? []).map(equipementLabel),
-    });
+    };
+  };
+
+  useEffect(() => {
+    const request = buildAnalyzeRequest();
+    if (!request) return;
+    analyzeMutation.mutate(request);
     // Intentionnel : une fois par terrain/décision au montage
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, terrain?.id, decision?.decision_id]);
@@ -596,22 +600,8 @@ function Page() {
           size="sm"
           disabled={analyzeMutation.isPending}
           onClick={() => {
-            const centroid = terrainCentroid(terrain.points);
-            if (!centroid) return;
-            analyzeMutation.mutate({
-              farmer_name: user.nom,
-              terrain_id: terrain.id,
-              location: {
-                latitude: centroid.lat,
-                longitude: centroid.lon,
-                label: terrain.region ?? terrain.nom ?? undefined,
-              },
-              crops: decision.allocations.map((a) => ({
-                crop_name: a.culture,
-                hectares: a.hectares_alloues,
-              })),
-              hardware_inventory: (user.equipements ?? []).map(equipementLabel),
-            });
+            const request = buildAnalyzeRequest();
+            if (request) analyzeMutation.mutate(request);
           }}
         >
           {analyzeMutation.isPending ? (

@@ -23,12 +23,13 @@ ROOT = Path(__file__).resolve().parents[1]
 
 # name, working directory (relative to ROOT), ASGI app, port
 SERVICES: list[tuple[str, str, str, int]] = [
-    ("business", "backend/agent_business", "app.main:app", 8000),
+    ("orchestrator", "backend/orchestrator", "app.main:app", 8000),
     ("auth", "backend/auth", "app.main:app", 8001),
     ("agriculture", "backend/agent_agriculture", "app.main:app", 8002),
     ("monitoring", "backend/agent_monitoring", "app.main:app", 8003),
     ("waste", "backend/waste_agents", "api.main:app", 8004),
     ("regulation", "backend/agent_regulation", "app.main:app", 8005),
+    ("business", "backend/agent_business", "app.main:app", 8006),
 ]
 
 
